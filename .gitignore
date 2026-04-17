@@ -12,6 +12,9 @@ dist/
 # Imagens de amostras de benchmark
 **/amostras/*.png
 
+# Python virtual environment
+.venv/
+
 # Python
 __pycache__/
 *.pyc

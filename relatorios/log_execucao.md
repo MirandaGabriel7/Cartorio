@@ -33,6 +33,55 @@ Plano: fase0_plano_execucao.md v1.0
 
 ---
 
+## [2026-04-17 11:45] Activity: Correção de estratégia de dependências (continuação do Setup)
+
+**Status:** CONCLUDED
+**Duration:** ~30 min
+**Summary:** Corrigido paddlepaddle de 2.6.1 para 2.6.2 (única versão 2.x disponível no PyPI para Python 3.11 Windows). Atualizado setup_ambiente.ps1 para usar py -3.11 no check de Python e .venv no pip install. Adicionado .venv/ ao .gitignore. Gerado requirements-lock.txt via pip freeze com 81 pacotes. setup_ambiente.ps1 executado com sucesso completo: todos os 7 checks passaram, npm install e pip install bem-sucedidos, tsc --noEmit sem erros.
+**Parameters declared:** python=3.11.9 (via py -3.11); venv=.venv; paddlepaddle=2.6.2; paddleocr=2.7.3; PyMuPDF=1.23.26; numpy=1.26.4; opencv-python-headless=4.9.0.80; Pillow=10.2.0
+**Outputs:**
+- requirements.txt (paddlepaddle atualizado para 2.6.2)
+- requirements-lock.txt (pip freeze completo, 81 pacotes)
+- scripts/setup_ambiente.ps1 (atualizado: py -3.11 check, .venv creation, .venv pip install)
+- .gitignore (adicionado .venv/)
+- .venv/ (Python 3.11.9, criado em sessão anterior pelo líder técnico)
+**Issues encountered:**
+- RISCO RESIDUAL: paddleocr 2.7.3 instala opencv-python==4.6.0.66 e opencv-contrib-python==4.6.0.66 como dependências transitivas, coexistindo com opencv-python-headless==4.9.0.80 no mesmo venv. Em runtime, os scripts de benchmark devem importar cv2 de opencv-python-headless (headless). O worker do PaddleOCR usa o cv2 interno do paddleocr. Não há conflito funcional esperado, mas o comportamento deve ser verificado durante a Atividade #7 (benchmark de pré-processamento).
+- DECISÕES CONFIRMADAS: ver registros DECISION-1 a DECISION-5 abaixo.
+**Next activity:** Coleta do corpus (145 documentos)
+
+---
+
+---
+
+### Technical decision [2026-04-17 11:45] — DECISION-6: paddlepaddle version correction (2.6.1 → 2.6.2)
+
+**Context:** paddlepaddle==2.6.1 não possui wheel para Python 3.11 Windows no PyPI. pip install falhou com ETARGET. Versões disponíveis para cp311: 2.6.2, 3.0.0–3.3.1. A versão 2.6.2 é um patch release do mesmo minor.
+
+**Alternatives considered:**
+
+1. paddlepaddle==2.6.2 — patch bump; mesmo minor; paddleocr 2.7.3 é compatível; wheel cp311-win_amd64 disponível.
+2. paddlepaddle==3.0.0 — major version; paddleocr 2.7.3 não testado com paddle 3.x; risco de incompatibilidade de API.
+3. Bloquear até resolução — não funcional; nenhuma versão 2.6.1 existe para cp311.
+
+**Decision taken:** paddlepaddle==2.6.2. Verificado: pip install bem-sucedido; setup_ambiente.ps1 passou.
+
+**Justification:** Único patch compatível com Python 3.11 Windows e paddleocr 2.7.3. O plano fixou 2.6.1 como a versão corrente à época; 2.6.2 é o release imediatamente seguinte sem quebra de API.
+
+**Impact on the pipeline:**
+
+- requirements.txt atualizado: paddlepaddle==2.6.1 → 2.6.2.
+- Nenhum impacto esperado na Atividade #8 (benchmark de OCR com PaddleOCR).
+- A compatibilidade será verificada empiricamente durante a Atividade #8; qualquer divergência de comportamento será registrada como novo decision record.
+
+**Approved by:** Líder técnico — confirmado explicitamente na sessão de 2026-04-17.
+
+**Evidence artifacts:**
+
+- requirements.txt
+- requirements-lock.txt (paddlepaddle==2.6.2 presente)
+- relatorios/log_execucao.md (este registro)
+
 ---
 
 ### Technical decision [2026-04-17 10:35] — DECISION-1: Node.js version deviation (v22 vs v20)
@@ -55,11 +104,12 @@ Plano: fase0_plano_execucao.md v1.0
 - Nenhum impacto funcional esperado nos benchmarks TypeScript.
 - Se aceito v22: atualizar check no setup_ambiente.ps1 de `v20` para `v20` OR `v22` (ambos LTS).
 
-**Approved by:** PENDENTE — líder técnico (gabrielmiranda3004@gmail.com)
+**Approved by:** Líder técnico — 2026-04-17. Decisão: Node.js v20 LTS obrigatório. Máquina confirmada em v20.20.0 (verificado por `node --version`). setup_ambiente.ps1 passando.
 
 **Evidence artifacts:**
 
 - relatorios/log_execucao.md (este registro)
+- `node --version` → v20.20.0
 
 ---
 
@@ -82,11 +132,13 @@ Plano: fase0_plano_execucao.md v1.0
 - pip install -r requirements.txt pode falhar para paddleocr/paddlepaddle. Outros pacotes (opencv-python-headless, Pillow, numpy, PyMuPDF) provavelmente instalarão sem problema.
 - Se Python 3.11 não for instalado antes da Atividade #7 (benchmark de pré-processamento) e Atividade #8 (benchmark de OCR), essas atividades serão BLOCKED.
 
-**Approved by:** PENDENTE — líder técnico (gabrielmiranda3004@gmail.com)
+**Approved by:** Líder técnico — 2026-04-17. Decisão: Python 3.11.9 + .venv dedicado. Sistema default (3.14.4) não é usado; todo benchmark Python executa via `.venv/Scripts/python.exe` (Python 3.11.9). Verificado: `.venv/Scripts/python.exe --version` → Python 3.11.9.
 
 **Evidence artifacts:**
 
 - relatorios/log_execucao.md (este registro)
+- .venv/pyvenv.cfg (version = 3.11.9)
+- requirements-lock.txt (instalação bem-sucedida)
 
 ---
 
@@ -138,7 +190,7 @@ Plano: fase0_plano_execucao.md v1.0
 - Se mantido: risco de segurança residual aceito formalmente; sem impacto funcional nos benchmarks.
 - Se trocado por alternativa: Atividade #8 (benchmark de OCR) requer atualização do worker de Tesseract; escopo limitado a `ferramentas/ocr_workers/tesseract_worker.ts`.
 
-**Approved by:** PENDENTE — líder técnico (gabrielmiranda3004@gmail.com)
+**Approved by:** Líder técnico — 2026-04-17. Decisão: aceito para Phase 0 exclusivamente. **Substituição obrigatória antes do Phase 1.** Alternativa preferida para Phase 1: invocar Tesseract via child_process.execFile (padrão já usado para poppler) ou tesseract.js, eliminando a dependência de node-tesseract-ocr.
 
 **Evidence artifacts:**
 

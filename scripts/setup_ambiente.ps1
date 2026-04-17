@@ -1,66 +1,81 @@
 # setup_ambiente.ps1 — Setup completo do ambiente da Fase 0
 # Executar como Administrador no PowerShell
+# Python 3.11 via Windows py launcher; dependencias isoladas em .venv
 
 Write-Host "=== CartorioDoc Fase 0 - Setup do Ambiente ===" -ForegroundColor Cyan
 
-# 1. Verificar Node.js
+# 1. Verificar Node.js 20 LTS
 $nodeVersion = node --version 2>$null
 if (-not $nodeVersion -or -not $nodeVersion.StartsWith("v20")) {
-    Write-Host "ERRO: Node.js 20 LTS não encontrado. Instale de https://nodejs.org/" -ForegroundColor Red
+    Write-Host "ERRO: Node.js 20 LTS nao encontrado (encontrado: $nodeVersion). Instale v20 LTS de https://nodejs.org/" -ForegroundColor Red
     exit 1
 }
 Write-Host "Node.js: $nodeVersion" -ForegroundColor Green
 
-# 2. Verificar Python
-$pythonVersion = python --version 2>$null
-if (-not $pythonVersion -or -not $pythonVersion.Contains("3.11")) {
-    Write-Host "ERRO: Python 3.11.x não encontrado. Instale de https://www.python.org/" -ForegroundColor Red
+# 2. Verificar Python 3.11 via py launcher
+$py311Version = py -3.11 --version 2>$null
+if (-not $py311Version -or -not $py311Version.Contains("3.11")) {
+    Write-Host "ERRO: Python 3.11.x nao encontrado via py launcher (py -3.11). Instale Python 3.11 de https://www.python.org/" -ForegroundColor Red
     exit 1
 }
-Write-Host "Python: $pythonVersion" -ForegroundColor Green
+Write-Host "Python 3.11: $py311Version (via py -3.11)" -ForegroundColor Green
 
-# 3. Verificar Tesseract
+# 3. Verificar Tesseract 5
 $tessVersion = tesseract --version 2>$null
 if (-not $tessVersion) {
-    Write-Host "ERRO: Tesseract 5 não encontrado no PATH." -ForegroundColor Red
+    Write-Host "ERRO: Tesseract 5 nao encontrado no PATH." -ForegroundColor Red
     exit 1
 }
 Write-Host "Tesseract: instalado" -ForegroundColor Green
 
-# 4. Verificar modelo tessdata_best para português
+# 4. Verificar modelo tessdata_best para portugues
 $tessdata = "C:\Program Files\Tesseract-OCR\tessdata\por.traineddata"
 if (-not (Test-Path $tessdata)) {
-    Write-Host "ERRO: Modelo por.traineddata não encontrado em tessdata." -ForegroundColor Red
+    Write-Host "ERRO: Modelo por.traineddata nao encontrado em tessdata." -ForegroundColor Red
     exit 1
 }
-Write-Host "Modelo português tessdata_best: presente" -ForegroundColor Green
+Write-Host "Modelo portugues tessdata_best: presente" -ForegroundColor Green
 
-# 5. Instalar dependências Node.js
-Write-Host "Instalando dependências Node.js..." -ForegroundColor Yellow
+# 5. Criar .venv com Python 3.11 se nao existir
+if (-not (Test-Path ".venv\Scripts\python.exe")) {
+    Write-Host "Criando .venv com Python 3.11..." -ForegroundColor Yellow
+    py -3.11 -m venv .venv
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "ERRO: Falha ao criar .venv." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host ".venv criado com Python 3.11." -ForegroundColor Green
+} else {
+    $venvPyVer = .venv\Scripts\python.exe --version 2>$null
+    Write-Host ".venv existente: $venvPyVer" -ForegroundColor Green
+}
+
+# 6. Instalar dependencias Node.js
+Write-Host "Instalando dependencias Node.js..." -ForegroundColor Yellow
 npm install
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO: npm install falhou." -ForegroundColor Red
     exit 1
 }
-Write-Host "Dependências Node.js instaladas." -ForegroundColor Green
+Write-Host "Dependencias Node.js instaladas." -ForegroundColor Green
 
-# 6. Instalar dependências Python
-Write-Host "Instalando dependências Python..." -ForegroundColor Yellow
-pip install -r requirements.txt
+# 7. Instalar dependencias Python no .venv
+Write-Host "Instalando dependencias Python no .venv (Python 3.11)..." -ForegroundColor Yellow
+.venv\Scripts\pip.exe install -r requirements.txt
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "ERRO: pip install falhou." -ForegroundColor Red
+    Write-Host "ERRO: pip install falhou. Verifique requirements.txt e conectividade." -ForegroundColor Red
     exit 1
 }
-Write-Host "Dependências Python instaladas." -ForegroundColor Green
+Write-Host "Dependencias Python instaladas no .venv." -ForegroundColor Green
 
-# 7. Compilar TypeScript
+# 8. Compilar TypeScript
 Write-Host "Compilando TypeScript..." -ForegroundColor Yellow
 npx tsc --noEmit
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "AVISO: Erros de compilação TypeScript. Verifique tsconfig.json." -ForegroundColor Yellow
+    Write-Host "AVISO: Erros de compilacao TypeScript. Verifique tsconfig.json." -ForegroundColor Yellow
 }
 
-# 8. Criar diretórios de trabalho
+# 9. Criar diretorios de trabalho
 $dirs = @(
     "corpus/originais/escrituras",
     "corpus/originais/matriculas",
@@ -80,8 +95,8 @@ $dirs = @(
 foreach ($dir in $dirs) {
     New-Item -ItemType Directory -Path $dir -Force | Out-Null
 }
-Write-Host "Diretórios criados." -ForegroundColor Green
+Write-Host "Diretorios criados." -ForegroundColor Green
 
 Write-Host ""
 Write-Host "=== Setup concluido com sucesso ===" -ForegroundColor Cyan
-Write-Host "Proximo passo: coletar documentos do corpus e colocar em corpus/originais/" -ForegroundColor White
+Write-Host "Proximo passo: coletar documentos do corpus em corpus/originais/" -ForegroundColor White
