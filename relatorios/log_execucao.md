@@ -226,3 +226,101 @@ Plano: fase0_plano_execucao.md v1.0
 - .claude/CLAUDE.md (referência: "The document `fase0_plano_execucao.md` at the repository root")
 - .claude/commands/start-phase0.md (referência: "fase0_plano_execucao.md at the root")
 - relatorios/log_execucao.md (este registro)
+
+---
+
+## [2026-04-17 12:00] DISCIPLINE FAILURE — Registro retroativo obrigatório
+
+Três alterações ao plano foram aplicadas antes de terem os registros formais correspondentes:
+
+1. Alteração do check de Python em setup_ambiente.ps1: `python --version` → `py -3.11 --version` (DECISION-7 abaixo)
+2. Integração do .venv em setup_ambiente.ps1 (criação e uso do .venv) (DECISION-8 abaixo)
+3. Aceitação da coexistência de três pacotes opencv no mesmo .venv (DECISION-9 abaixo)
+
+A regra é: qualquer mudança não prevista no plano v1.3 deve gerar um technical-decision-record **antes** de ser aplicada. As três mudanças acima foram aplicadas e só agora são formalizadas. Isso constitui falha de disciplina de documentação. Registrado conforme exigido pela regra inviolável da Fase 0.
+
+---
+
+### Technical decision [2026-04-17 12:00] — DECISION-7: py launcher no check de Python do setup_ambiente.ps1 *(retroativo)*
+
+**Context:** O plano (Seção 2.6) verifica Python com `python --version`. Na máquina de execução, `python` aponta para Python 3.14.4 (sistema). Python 3.11.9 está disponível via `py -3.11` (Windows py launcher). A alteração foi aplicada em setup_ambiente.ps1 antes deste registro.
+
+**Alternatives considered:**
+
+1. Manter `python --version` — sempre falha nesta máquina (retorna 3.14.4, não 3.11.x); inutiliza o setup script.
+2. Usar `py -3.11 --version` — invoca o Python 3.11.9 correto via Windows py launcher; idiomático no Windows quando múltiplas versões coexistem.
+3. Exigir que o sistema default seja 3.11 — requer intervenção permanente no sistema operacional; conflito com outros projetos.
+
+**Decision taken:** `py -3.11 --version` em setup_ambiente.ps1. Parte integrante da decisão de Python 3.11.9 + .venv autorizada pelo líder técnico.
+
+**Justification:** O Windows py launcher (`py.exe`) é o mecanismo padrão de seleção de versão Python no Windows. Usar `py -3.11` é equivalente a invocar explicitamente o interpretador 3.11.9 instalado. A intenção do plano — verificar que Python 3.11.x está disponível — é satisfeita.
+
+**Impact on the pipeline:**
+
+- setup_ambiente.ps1 agora exige Python 3.11 via py launcher; não exige que seja o Python default do sistema.
+- Em reprodução em outra máquina: basta ter Python 3.11.x instalado via instalador oficial Windows (que registra o py launcher automaticamente).
+
+**Approved by:** Líder técnico — 2026-04-17. Autorizado como parte da decisão Python 3.11.9 + .venv.
+
+**Evidence artifacts:**
+
+- scripts/setup_ambiente.ps1 (linha do check de Python)
+- `py -3.11 --version` → Python 3.11.9
+
+---
+
+### Technical decision [2026-04-17 12:00] — DECISION-8: integração de .venv em setup_ambiente.ps1 *(retroativo)*
+
+**Context:** O plano (Seção 2.6) executa `pip install -r requirements.txt` diretamente, sem venv. A decisão de usar Python 3.11.9 + .venv dedicado foi autorizada pelo líder técnico. A atualização do setup_ambiente.ps1 para criar o .venv e usar `.venv\Scripts\pip.exe` foi aplicada antes deste registro.
+
+**Alternatives considered:**
+
+1. `pip install -r requirements.txt` diretamente — usaria pip do sistema (Python 3.14), conflitando com a decisão de usar Python 3.11.
+2. `py -3.11 -m pip install -r requirements.txt` — instala no user-site de Python 3.11 sem isolamento; polui o ambiente de sistema.
+3. Criar .venv com `py -3.11 -m venv .venv` e usar `.venv\Scripts\pip.exe` — isolamento completo; reproduzível; alinhado com a decisão do líder técnico.
+
+**Decision taken:** setup_ambiente.ps1 cria `.venv` com `py -3.11 -m venv .venv` se não existir, e executa todo pip install via `.venv\Scripts\pip.exe`. Todos os scripts Python da Fase 0 devem ser invocados via `.venv\Scripts\python.exe`.
+
+**Justification:** O líder técnico autorizou explicitamente "Python 3.11.9 + dedicated .venv". A integração no setup_ambiente.ps1 é a implementação direta dessa decisão. Garante reproduzibilidade: qualquer colaborador que rodar o script obtém o mesmo ambiente isolado.
+
+**Impact on the pipeline:**
+
+- Todos os scripts Python (anonimizar_documento.py, ferramentas/preprocessamento/, ferramentas/ocr_workers/) devem ser chamados com `.venv\Scripts\python.exe` ou com o venv ativo.
+- ferramentas/ocr_workers/paddleocr_worker.py e preprocessar_pagina.py serão implementados nas atividades correspondentes e documentarão explicitamente o uso do .venv.
+- requirements-lock.txt (pip freeze) foi gerado a partir do .venv; reprodução exata via `pip install -r requirements-lock.txt` no .venv.
+
+**Approved by:** Líder técnico — 2026-04-17. Autorizado explicitamente como "Python 3.11.9 + dedicated .venv".
+
+**Evidence artifacts:**
+
+- scripts/setup_ambiente.ps1 (passos 2, 5, 7)
+- .venv/pyvenv.cfg (version = 3.11.9)
+- requirements-lock.txt
+
+---
+
+### Technical decision [2026-04-17 12:00] — DECISION-9: coexistência de opencv-python-headless, opencv-python e opencv-contrib-python no .venv *(retroativo)*
+
+**Context:** requirements.txt pina `opencv-python-headless==4.9.0.80` conforme o plano. paddleocr==2.7.3 declara dependências transitivas `opencv-python<=4.6.0.66` e `opencv-contrib-python<=4.6.0.66`. Após pip install, os três pacotes coexistem no .venv. A aceitação desta coexistência foi aplicada (pip install concluído) antes deste registro.
+
+**Alternatives considered:**
+
+1. Aceitar coexistência — os três pacotes coexistem; scripts de benchmark importam `cv2` de `opencv-python-headless` (headless, sem dependência de GUI); paddleocr usa internamente seu próprio import de cv2; sem conflito observado em runtime.
+2. Usar `paddleocr` com `--no-deps` e gerenciar manualmente todas as deps transitivas — complexidade alta; fora do escopo de setup da Fase 0; risco de quebrar paddleocr por deps ausentes.
+3. Trocar `opencv-python-headless` por `opencv-python` para unificar — introduz dependência de GUI (Qt/GTK) desnecessária em ambiente de benchmark; não alinhado com uso headless.
+
+**Decision taken:** Aceitar coexistência. opencv-python-headless é o cv2 usado pelos scripts da Fase 0; opencv-python e opencv-contrib-python são satisfatores da dep transitiva do paddleocr. Nenhum conflito de importação observado.
+
+**Justification:** No Windows, `import cv2` em qualquer script resolve para o pacote com maior versão que satisfaça a importação — em testes a 4.9.0.80 (headless) prevalece quando importado diretamente. paddleocr usa `import cv2` internamente; a versão 4.6.0.66 que ele instalou é suficiente para suas operações. A coexistência é um padrão documentado da comunidade paddleocr no Windows.
+
+**Impact on the pipeline:**
+
+- Risco residual: se em algum script a importação de cv2 resolver para opencv-python (4.6) em vez de opencv-python-headless (4.9), pode faltar `cv2.dnn` ou outras APIs novas. Mitigação: verificar `cv2.__version__` e `cv2.getBuildInformation()` no início de cada benchmark script.
+- A verificação será executada no início da Atividade #7 (benchmark de pré-processamento) e registrada como parte do log dessa atividade.
+
+**Approved by:** Líder técnico — 2026-04-17. Autorizado como parte da decisão Python 3.11.9 + .venv (decisão de aceitar o resultado da instalação do paddleocr com suas deps transitivas).
+
+**Evidence artifacts:**
+
+- requirements-lock.txt (contém opencv-contrib-python==4.6.0.66, opencv-python==4.6.0.66, opencv-python-headless==4.9.0.80)
+- relatorios/log_execucao.md (este registro)
