@@ -1,0 +1,30 @@
+{
+  "name": "cartoriodoc-fase0",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "benchmark:rasterizacao": "ts-node benchmarks/rasterizacao/run_benchmark_rasterizacao.ts",
+    "benchmark:preprocessamento": "ts-node benchmarks/preprocessamento/run_benchmark_preprocessamento.ts",
+    "benchmark:ocr": "ts-node benchmarks/ocr/run_benchmark_ocr.ts",
+    "parser:sketch": "ts-node parser_sketch/src/medir_acerto.ts",
+    "validar:corpus": "ts-node scripts/validar_corpus_catalog.ts",
+    "validar:gt": "ts-node scripts/validar_ground_truth.ts",
+    "baseline:gerar": "ts-node benchmarks/scripts/gerar_relatorio.ts",
+    "baseline:comparar": "ts-node benchmarks/scripts/comparar_baseline.ts"
+  },
+  "dependencies": {
+    "mupdf": "^1.27.0",
+    "node-tesseract-ocr": "^2.2.1",
+    "sharp": "^0.33.2",
+    "fastest-levenshtein": "^1.0.16",
+    "ajv": "^8.12.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.2",
+    "@types/node": "^20.11.0",
+    "@types/uuid": "^9.0.7"
+  }
+}

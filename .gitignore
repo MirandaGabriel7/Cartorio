@@ -1,0 +1,35 @@
+# Corpus — PDFs originais e anonimizados nunca versionados
+corpus/originais/
+corpus/anonimizados/
+
+# Arquivos temporários
+temp/
+
+# Node.js
+node_modules/
+dist/
+
+# Imagens de amostras de benchmark
+**/amostras/*.png
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.env
+.venv
+venv/
+
+# TypeScript
+*.js.map
+*.d.ts
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
