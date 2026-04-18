@@ -105,3 +105,80 @@ O segundo anotador deve rodar **ambas** as verificações:
 ### Carry-forward
 
 Este protocolo reforçado deve ser aplicado quando a Activity #3 for executada. O script/checklist da Activity #3 deve incorporar essa verificação dupla. Registrar no checklist auxiliar quando criado.
+
+---
+
+## DECISION-12 — Persistent fixture generation script for BLOCO 5C reproducibility
+
+**ID:** DECISION-12
+**Data:** 2026-04-18
+**Aprovado por:** Líder técnico humano — aprovação retroativa constante na revisão pós-BLOCO 5C
+**Arquivo:** `tests/fixtures/gerar_sinteticos_5c.py`
+
+### Contexto
+
+Durante a execução do BLOCO 5C, foi criado `gerar_sinteticos_5c.py` (222 linhas) como script persistente em vez de geração descartável em memória. O líder técnico questionou a justificativa.
+
+### Justificativa para script persistente
+
+A geração dos PDFs sintéticos é um processo de dois estágios que exige disco:
+
+1. Renderizar o PDF com PyMuPDF e salvá-lo em disco.
+2. Reabrir o PDF e chamar `page.search_for()` para extrair bounding boxes reais do texto inserido.
+
+O estágio 2 não é possível sem o PDF em disco. Geração "em memória" não é viável para esse fluxo. Adicionalmente, foi necessário iterar o script (bug de cobertura incompleta do nome FULANO DE TAL SINTETICO — aparecia na linha de dados e na linha de assinatura) — iteração que seria impossível de rastrear sem o script persistente.
+
+### Análise de complexidade (222 linhas)
+
+Composição aproximada:
+- ~50 linhas: conteúdo textual dos PDFs (listas de tuplas `(x, y, size, bold, texto)`) — verboso mas necessário para criar documentos plausíveis
+- ~30 linhas: quatro funções utilitárias simples sem generalização
+- ~100 linhas: `main()` construindo dicts dos CSVs de controle
+- ~20 linhas: imports, docstring, boilerplate
+
+Não há abstrações para uso futuro, padrões factory, classes base, nem estrutura que suggira "para quando precisarmos de mais tipos". As duas funções de busca de rect (`extract_rect_for_text` / `extract_all_rects_for_text`) têm propósitos distintos e corretos no mesmo contexto: CPF e endereço têm uma ocorrência; o nome do vendedor aparece duas vezes (dado + assinatura). Não é scope drift.
+
+### Uso além do BLOCO 5C
+
+Nenhum uso planejado além de reproduzibilidade. O script não é chamado por nenhum pipeline. Função: permitir que qualquer auditor regenere os fixtures sintéticos e re-execute a verificação de anonimização a partir do zero.
+
+### Limitação registrada
+
+`extract_rect_for_text` (busca primeira ocorrência) permanece no script mesmo com `extract_all_rects_for_text` cobrindo o caso geral. Coexistência é deliberada: os campos com ocorrência única (CPF, endereço) usam a versão simples; campos com ocorrências múltiplas (nome) usam a versão completa. Não é duplicação desnecessária.
+
+---
+
+## DECISION-13 — Persistent verification script for BLOCO 5C (reference implementation with known limitation)
+
+**ID:** DECISION-13
+**Data:** 2026-04-18
+**Aprovado por:** Líder técnico humano — aprovação retroativa constante na revisão pós-BLOCO 5C
+**Arquivo:** `tests/fixtures/verificar_anonimizacao_5c.py`
+
+### Contexto
+
+Durante a execução do BLOCO 5C, foi criado `verificar_anonimizacao_5c.py` (160 linhas) como script persistente de verificação. O líder técnico questionou a justificativa e perguntou explicitamente se o script implementa o protocolo "OCR + pdftotext" da DECISION-11.
+
+### Justificativa para script persistente
+
+Reproduzibilidade e auditabilidade: sem o script, a verificação de anonimização do BLOCO 5C não pode ser re-executada por auditores. O script também serve como implementação-referência do protocolo de verificação da DECISION-11 para a Activity #3.
+
+### Implementa o protocolo "OCR + pdftotext" da DECISION-11?
+
+**Parcialmente — com limitação documentada.**
+
+| Componente do protocolo DECISION-11 | Implementado? | Ferramenta usada |
+|-------------------------------------|---------------|------------------|
+| Extração do content stream do PDF | **SIM** | `fitz.Page.get_text()` (PyMuPDF) |
+| OCR visual (Tesseract) | **SIM** | `tesseract` via subprocess |
+| `pdftotext` (poppler) | **NÃO** | — |
+
+`fitz.Page.get_text()` é funcionalmente equivalente a `pdftotext` — ambos extraem texto diretamente do content stream sem renderização. Porém a DECISION-11 especifica `pdftotext` (poppler) explicitamente como segundo parser, com a justificativa de que parsers diferentes têm comportamentos diferentes e um pode capturar o que o outro falha. Este script **não é** implementação completa do protocolo da DECISION-11: falta a verificação via `pdftotext`.
+
+### Consequência
+
+O script cobre OCR + extração de stream com uma única biblioteca (PyMuPDF). Serve como referência para Activity #3, mas a Activity #3 deverá adicionar a verificação `pdftotext` para cumprir integralmente a DECISION-11. Isso deve ser incorporado ao checklist da Activity #3 quando criado.
+
+### Carry-forward
+
+Quando o checklist da Activity #3 for criado, acrescentar: "verificar_anonimizacao_5c.py é referência parcial; adicionar pdftotext conforme DECISION-11 antes de usar em corpus real."
