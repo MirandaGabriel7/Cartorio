@@ -1,0 +1,206 @@
+{
+  "$schema": "ground_truth_schema",
+  "documento_id": "escritura_boa_001",
+  "tipo": "ESCRITURA_COMPRA_VENDA",
+  "classificacao_qualidade": "BOA",
+  "total_paginas": 4,
+  "anotador_primario": "ANOTADOR_SINTETICO_001",
+  "anotador_secundario": null,
+  "data_anotacao_primaria": "2026-01-16",
+  "data_anotacao_secundaria": null,
+  "discordancias_resolvidas": true,
+  "resolucao_discordancias": null,
+  "campos": {
+    "tipo_titulo": {
+      "valor": null,
+      "pagina": 1,
+      "obrigatorio": true
+    },
+    "numero_livro": {
+      "valor": "9999",
+      "pagina": 1,
+      "obrigatorio": true
+    },
+    "numero_folhas": {
+      "valor": "999",
+      "pagina": 1,
+      "obrigatorio": true
+    },
+    "data_lavratura": {
+      "valor": "01/01/2026",
+      "pagina": 1,
+      "obrigatorio": true
+    },
+    "tabeliao_nome": {
+      "valor": "TABELIAO SINTETICO",
+      "pagina": 1,
+      "obrigatorio": true
+    },
+    "municipio_tabelionato": {
+      "valor": "CIDADE SINTETICA",
+      "pagina": 1,
+      "obrigatorio": true
+    },
+    "uf_tabelionato": {
+      "valor": "SP",
+      "pagina": 1,
+      "obrigatorio": true
+    },
+    "transmitente_1_nome": {
+      "valor": "FULANO SINTETICO INVALIDO",
+      "pagina": 1,
+      "obrigatorio": true
+    },
+    "transmitente_1_cpf": {
+      "valor": "1234567890",
+      "pagina": 1,
+      "obrigatorio": true
+    },
+    "transmitente_1_tipo_pessoa": {
+      "valor": "FISICA",
+      "pagina": 1,
+      "obrigatorio": true
+    },
+    "transmitente_1_estado_civil": {
+      "valor": "SOLTEIRO",
+      "pagina": 1,
+      "obrigatorio": true
+    },
+    "transmitente_1_regime_bens": {
+      "valor": null,
+      "pagina": 1,
+      "obrigatorio": false
+    },
+    "transmitente_1_profissao": {
+      "valor": "PROFISSAO SINTETICA",
+      "pagina": 1,
+      "obrigatorio": true
+    },
+    "transmitente_1_nacionalidade": {
+      "valor": "BRASILEIRO",
+      "pagina": 1,
+      "obrigatorio": true
+    },
+    "adquirente_1_nome": {
+      "valor": "CICLANO SINTETICO",
+      "pagina": 2,
+      "obrigatorio": true
+    },
+    "adquirente_1_cpf": {
+      "valor": "00000000003",
+      "pagina": 2,
+      "obrigatorio": true
+    },
+    "adquirente_1_tipo_pessoa": {
+      "valor": "FISICA",
+      "pagina": 2,
+      "obrigatorio": true
+    },
+    "adquirente_1_estado_civil": {
+      "valor": "SOLTEIRO",
+      "pagina": 2,
+      "obrigatorio": true
+    },
+    "adquirente_1_regime_bens": {
+      "valor": null,
+      "pagina": 2,
+      "obrigatorio": false
+    },
+    "adquirente_1_profissao": {
+      "valor": "PROFISSAO SINTETICA",
+      "pagina": 2,
+      "obrigatorio": true
+    },
+    "adquirente_1_nacionalidade": {
+      "valor": "BRASILEIRO",
+      "pagina": 2,
+      "obrigatorio": true
+    },
+    "matricula": {
+      "valor": "99999",
+      "pagina": 3,
+      "obrigatorio": true
+    },
+    "valor_partes": {
+      "valor": 500000.50,
+      "pagina": 3,
+      "obrigatorio": true
+    },
+    "doi_emitida_mencionada": {
+      "valor": true,
+      "pagina": 3,
+      "obrigatorio": true
+    },
+    "itbi_mencionado": {
+      "valor": true,
+      "pagina": 3,
+      "obrigatorio": true
+    },
+    "certidao_acoes_reais_apresentada": {
+      "valor": true,
+      "pagina": 3,
+      "obrigatorio": true
+    },
+    "area": {
+      "valor": "120.50",
+      "pagina": 3,
+      "obrigatorio": true
+    },
+    "unidade_area": {
+      "valor": "m2",
+      "pagina": 3,
+      "obrigatorio": true
+    },
+    "tipo_imovel": {
+      "valor": "APARTAMENTO SINTETICO",
+      "pagina": 3,
+      "obrigatorio": true
+    },
+    "urbano_ou_rural": {
+      "valor": "URBANO",
+      "pagina": 3,
+      "obrigatorio": true
+    }
+  },
+  "texto_completo_por_pagina": {
+    "1": "Texto sintetico invalido pagina 1.",
+    "2": "Texto sintetico invalido pagina 2.",
+    "3": "Texto sintetico invalido pagina 3.",
+    "4": "Texto sintetico invalido pagina 4."
+  },
+  "checklist_gabarito": {
+    "item_01": "OK",
+    "item_02": "OK",
+    "item_03": "OK",
+    "item_04": "OK",
+    "item_05": "OK",
+    "item_06": "NAO_APLICA",
+    "item_07": "OK",
+    "item_08": "OK",
+    "item_09": "OK",
+    "item_10": "OK",
+    "item_11": "NAO_APLICA",
+    "item_12": "OK",
+    "item_13": "OK",
+    "item_14": "OK",
+    "item_15": "OK",
+    "item_16": "NAO_APLICA",
+    "item_17": "OK",
+    "item_18": "OK",
+    "item_19": "NAO_APLICA",
+    "item_20": "OK",
+    "item_21": "OK",
+    "item_22": "OK",
+    "item_23": "NAO_APLICA",
+    "item_24": "OK",
+    "item_25": "OK",
+    "item_26": "OK",
+    "item_27": "NAO_APLICA",
+    "item_28": "OK",
+    "item_29": "OK",
+    "item_30": "OK",
+    "item_31": "NAO_APLICA",
+    "item_32": "OK",
+    "item_33": "OK"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "data": "2026-04-18T01:19:13.231Z",
+  "total_arquivos": 1,
+  "total_validos": 0,
+  "total_erros": 7,
+  "erros": [
+    {
+      "arquivo": "escritura_boa_001_gt.json",
+      "documento_id": "escritura_boa_001",
+      "campo": "/checklist_gabarito",
+      "regra": "json_schema",
+      "mensagem": "must have required property 'item_34' (required at /checklist_gabarito)"
+    },
+    {
+      "arquivo": "escritura_boa_001_gt.json",
+      "documento_id": "escritura_boa_001",
+      "campo": "campos.tipo_titulo.valor",
+      "regra": "obrigatorio_not_null",
+      "mensagem": "Campo \"tipo_titulo\" is obrigatorio=true but valor is null"
+    },
+    {
+      "arquivo": "escritura_boa_001_gt.json",
+      "documento_id": "escritura_boa_001",
+      "campo": "campos.transmitente_1_cpf.valor",
+      "regra": "cpf_11_digits",
+      "mensagem": "CPF field \"transmitente_1_cpf\" must be 11 digits, got \"1234567890\""
+    },
+    {
+      "arquivo": "escritura_boa_001_gt.json",
+      "documento_id": "escritura_boa_001",
+      "campo": "campos.data_lavratura.valor",
+      "regra": "date_iso8601",
+      "mensagem": "Date field \"data_lavratura\" must be YYYY-MM-DD, got \"01/01/2026\""
+    },
+    {
+      "arquivo": "escritura_boa_001_gt.json",
+      "documento_id": "escritura_boa_001",
+      "campo": "campos.valor_partes.valor",
+      "regra": "monetary_integer_cents",
+      "mensagem": "Monetary field \"valor_partes\" must be an integer (cents), got 500000.5"
+    },
+    {
+      "arquivo": "escritura_boa_001_gt.json",
+      "documento_id": "escritura_boa_001",
+      "campo": "checklist_gabarito.item_34",
+      "regra": "checklist_34_items",
+      "mensagem": "Checklist item \"item_34\" is missing"
+    },
+    {
+      "arquivo": "escritura_boa_001_gt.json",
+      "documento_id": "escritura_boa_001",
+      "campo": "resolucao_discordancias",
+      "regra": "resolucao_required_when_resolved",
+      "mensagem": "discordancias_resolvidas is true but resolucao_discordancias is null"
+    }
+  ]
+}

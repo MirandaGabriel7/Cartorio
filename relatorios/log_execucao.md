@@ -168,3 +168,138 @@ Regex: `^(escritura|matricula)_(boa|degradada|baixa|nativa|mono|onus|rural|trans
 
 **Issues encountered:** Nenhum.
 **Next activity:** Aguardando autorização do líder técnico para BLOCO 5B.
+
+---
+
+## [2026-04-17 22:00] Activity: BLOCO 5B — Validadores completos
+
+**Status:** CONCLUDED
+**Duration:** ~2 hours
+**Summary:** Implementação completa (não skeleton) de `scripts/validar_corpus_catalog.ts` e `scripts/validar_ground_truth.ts`. Criados 4 fixtures sintéticos em `tests/fixtures/`. Todos os 4 testes executados: valid fixtures → exit 0, invalid fixtures → exit 1 com descrição correta dos erros.
+
+**Parameters declared:** ajv ^8.12.0 + ajv-formats ^3.0.1; JSON Schema draft-07; exit code 0 = valid, 1 = invalid.
+
+**Outputs:**
+- `scripts/validar_corpus_catalog.ts` (implementação completa — substitui skeleton)
+- `scripts/validar_ground_truth.ts` (implementação completa — substitui skeleton)
+- `tests/fixtures/corpus_catalog_valido_sintetico.json` (3 docs sintéticos — ESC-BOA, MAT-ATUAL-BOA, ESC-DEG)
+- `tests/fixtures/corpus_catalog_invalido_sintetico.json` (3 erros deliberados: doc_id duplicado, prefixo inconsistente, formato_matricula não-null em escritura)
+- `tests/fixtures/sintetico_escritura_001_gt.json` (GT válido para escritura_boa_001)
+- `tests/fixtures/sintetico_escritura_001_gt_invalido.json` (GT inválido — 7 erros deliberados)
+- `tests/fixtures/gt_valido/escritura_boa_001_gt.json` (cópia para testes de diretório)
+- `tests/fixtures/gt_invalido/escritura_boa_001_gt.json` (cópia inválida para testes de diretório)
+- `relatorios/validacao_corpus.json` (relatório da última execução)
+- `relatorios/validacao_ground_truth.json` (relatório da última execução)
+- Stub PDFs: `corpus/anonimizados/ESC-BOA/escritura_boa_001.pdf`, `corpus/anonimizados/ESC-DEG/escritura_degradada_001.pdf`, `corpus/anonimizados/MAT-ATUAL-BOA/matricula_boa_001.pdf` (arquivos vazios para satisfazer o check arquivo_exists nas fixtures)
+
+**validar_corpus_catalog.ts — checks implemented:**
+1. JSON Schema validation via AJV (draft-07 + ajv-formats)
+2. total_documentos == len(documentos)
+3. documento_id uniqueness
+4. arquivo path exists (Rule 2)
+5. ground_truth_disponivel=true → ground_truth_arquivo non-null and exists (Rule 3)
+6. tipo_documento ↔ documento_id prefix consistency (Rule 4)
+7. MATRICULA constraints: transmitente_pj=false, assinatura_rogo=false, total_transmitentes=0 (Rule 5)
+8. ESCRITURA constraints: formato_matricula=null, tem_onus=false, tem_transporte_ficha=false (Rule 6)
+9. Category quota counts reported (Rule 8 — informational)
+Output: relatorios/validacao_corpus.json
+
+**validar_ground_truth.ts — checks implemented:**
+1. JSON Schema validation via AJV per file
+2. All obrigatorio=true campos have non-null valor (Rule 2)
+3. CPF fields: 11 digits only, no all-zeros (Rule 3)
+4. CNPJ fields: 14 digits; cpf_cnpj fields: 11 or 14 digits (Rule 3)
+5. Date fields (_data suffix): ISO 8601 YYYY-MM-DD (Rule 4)
+6. Monetary fields (_valor suffix): integer cents (Rule 5)
+7. documento_id cross-referenced against corpus_catalog.json (Rule 6)
+8. tipo, total_paginas cross-checked against catalog entry
+9. All 34 checklist items present and non-empty (Rule 7)
+10. discordancias_resolvidas=true → resolucao_discordancias non-null (Rule 8)
+11. Calibration corpus (first 30 GT-available docs by documento_id): anotador_secundario non-null, discordancias_resolvidas=true (Rule 9)
+Output: relatorios/validacao_ground_truth.json
+
+**Test run results:**
+
+```
+TEST 1: validar_corpus_catalog.ts vs corpus_catalog_valido_sintetico.json
+  Total documents: 3 | Documents with errors: 0 | Total errors: 0
+  Schema valid: true
+  EXIT_CODE=0  ✓ EXPECTED: 0
+
+TEST 2: validar_corpus_catalog.ts vs corpus_catalog_invalido_sintetico.json
+  Total documents: 3 | Documents with errors: 2 | Total errors: 5
+  Schema valid: true
+  Errors detected:
+    [escritura_boa_001] documento_id_unique: documento_id "escritura_boa_001" is duplicated
+    [escritura_boa_001] arquivo_exists: arquivo "corpus/anonimizados/ESC-BOA/escritura_boa_001_b.pdf" does not exist
+    [matricula_boa_002] arquivo_exists: arquivo "corpus/anonimizados/ESC-BOA/matricula_boa_002.pdf" does not exist
+    [matricula_boa_002] tipo_documento_id_consistency: tipo "ESCRITURA_COMPRA_VENDA" expects prefix "escritura" but got "matricula"
+    [matricula_boa_002] escritura_formato_matricula_null: formato_matricula=null required, got "ATUAL"
+  EXIT_CODE=1  ✓ EXPECTED: 1
+
+TEST 3: validar_ground_truth.ts vs gt_valido/ (escritura_boa_001_gt.json)
+  Files found: 1 | Files with errors: 0 | Total errors: 0
+  EXIT_CODE=0  ✓ EXPECTED: 0
+
+TEST 4: validar_ground_truth.ts vs gt_invalido/ (escritura_boa_001_gt.json)
+  Files found: 1 | Files with errors: 1 | Total errors: 7
+  Errors detected:
+    json_schema: must have required property 'item_34'
+    obrigatorio_not_null: tipo_titulo is obrigatorio=true but valor is null
+    cpf_11_digits: transmitente_1_cpf must be 11 digits, got "1234567890"
+    date_iso8601: data_lavratura must be YYYY-MM-DD, got "01/01/2026"
+    monetary_integer_cents: valor_partes must be integer, got 500000.5
+    checklist_34_items: item_34 is missing
+    resolucao_required_when_resolved: discordancias_resolvidas=true but resolucao_discordancias is null
+  EXIT_CODE=1  ✓ EXPECTED: 1
+```
+
+**Issues encountered:**
+1. Initial fixture used `escritura_deg_001` as documento_id — `deg` is not in the schema regex (full word `degradada` required). Fixed to `escritura_degradada_001`.
+2. Corpus catalog validator's `arquivo_exists` check requires the referenced PDFs to exist on disk. Created 3 stub (empty) PDF files under `corpus/anonimizados/` so the valid fixture passes. These stubs must NOT be committed (corpus/anonimizados/ is gitignored per .claude/rules/execution-environment.md).
+3. Invalid fixture originally had extra `_ERRO_DELIBERADO_*` annotation keys — removed because additionalProperties: false would reject them via JSON Schema before reaching semantic checks.
+
+**Next activity:** BLOCO 5C (awaiting technical lead authorization)
+
+
+---
+
+## [2026-04-17 23:00] Activity: Revisão 5B — Check 10 tipo×qualidade + hygiene
+
+**Status:** CONCLUDED
+**Duration:** ~30 min
+**Summary:** (1) Empirical test confirmed escritura_mono_001 was incorrectly accepted by previous Check 6 (prefix-only). (2) Added Check 10 (tipo×qualidade semantic validation) to validar_corpus_catalog.ts. (3) Added 4th deliberate error (escritura_mono_001 / ESCRITURA_COMPRA_VENDA) to invalid fixture. (4) Removed duplicate root-level GT fixture files.
+
+**Check 10 — tipo×qualidade mapping (derived from Section 3.1):**
+- ESCRITURA_COMPRA_VENDA: boa, degradada, baixa, nativa, multi, pj, rogo, marca, prenot
+- MATRICULA: boa, degradada, mono, onus, rural, transporte
+- Mapping verified against Section 3.1 — no discrepancies found. No technical-decision-record required.
+
+**Empirical test result (before fix):**
+  escritura_mono_001 + ESCRITURA_COMPRA_VENDA → EXIT_CODE=0 (WRONG — was accepted)
+**After fix:**
+  escritura_mono_001 + ESCRITURA_COMPRA_VENDA → EXIT_CODE=1, regra="tipo_qualidade_combination"
+  Error message: documento_id "escritura_mono_001" has qualidade "mono" that is not valid for tipo_documento "ESCRITURA_COMPRA_VENDA". Valid qualidades: boa, degradada, baixa, nativa, multi, pj, rogo, marca, prenot
+
+**Final test results (all 4 tests):**
+  TEST 1: corpus_catalog_valido_sintetico.json → EXIT_CODE=0 ✓
+  TEST 2: corpus_catalog_invalido_sintetico.json → EXIT_CODE=1, 6 errors ✓
+    - documento_id_unique (escritura_boa_001 duplicado)
+    - arquivo_exists (escritura_boa_001_b.pdf)
+    - arquivo_exists (matricula_boa_002.pdf)
+    - tipo_documento_id_consistency (matricula_boa_002 / ESCRITURA)
+    - escritura_formato_matricula_null (matricula_boa_002)
+    - tipo_qualidade_combination (escritura_mono_001 / ESCRITURA) ← NEW
+  TEST 3: gt_valido/ → EXIT_CODE=0 ✓
+  TEST 4: gt_invalido/ → EXIT_CODE=1, 7 errors ✓
+
+**Hygiene applied:** Removed tests/fixtures/sintetico_escritura_001_gt.json and tests/fixtures/sintetico_escritura_001_gt_invalido.json (root-level duplicates). Canonical GT fixtures are now exclusively in tests/fixtures/gt_valido/ and tests/fixtures/gt_invalido/.
+
+**Outputs modified:**
+- scripts/validar_corpus_catalog.ts (added VALID_QUALITIES_PER_TIPO constant + Check 10)
+- tests/fixtures/corpus_catalog_invalido_sintetico.json (total_documentos 3→4, added escritura_mono_001 entry)
+- Deleted: tests/fixtures/sintetico_escritura_001_gt.json
+- Deleted: tests/fixtures/sintetico_escritura_001_gt_invalido.json
+
+**Next activity:** BLOCO 5C (awaiting technical lead authorization)
+

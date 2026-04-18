@@ -1,0 +1,14 @@
+{
+  "data": "2026-04-18T01:09:23.410Z",
+  "total_documentos": 1,
+  "total_validos": 0,
+  "total_erros": 1,
+  "erros": [
+    {
+      "documento_id": "escritura_mono_001",
+      "campo": "documento_id",
+      "regra": "tipo_qualidade_combination",
+      "mensagem": "documento_id \"escritura_mono_001\" has qualidade \"mono\" that is not valid for tipo_documento \"ESCRITURA_COMPRA_VENDA\". Valid qualidades: boa, degradada, baixa, nativa, multi, pj, rogo, marca, prenot"
+    }
+  ]
+}
