@@ -12,7 +12,32 @@
       "Bash(pdftoppm -v)",
       "Bash(Test-Path \"C:\\\\Program Files\\\\Tesseract-OCR\\\\tessdata\\\\por.traineddata\")",
       "Bash(python -c \"import sys; print\\(sys.version\\)\")",
-      "Bash(powershell -ExecutionPolicy Bypass -File scripts/setup_ambiente.ps1)"
+      "Bash(powershell -ExecutionPolicy Bypass -File scripts/setup_ambiente.ps1)",
+      "Bash(py -3.11 --version)",
+      "Bash(pip --version)",
+      "Bash(ls .venv)",
+      "Bash(.venv/Scripts/python.exe --version)",
+      "Bash(.venv/Scripts/pip.exe list *)",
+      "Bash(.venv/Scripts/pip.exe install *)",
+      "Bash(.venv/Scripts/pip.exe index *)",
+      "Bash(.venv/Scripts/pip.exe download *)",
+      "Bash(.venv/Scripts/pip.exe freeze *)",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"const Ajv = require\\('ajv'\\); console.log\\('ajv v8 OK:', typeof Ajv\\);\")",
+      "Bash(node scripts/schemas/_validate_schemas.js)",
+      "Bash(node *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Read(//c/Users/GabrielMiranda/OneDrive/Documentos/GitHub/Cartorio/scripts/**)",
+      "Read(//c/Users/GabrielMiranda/OneDrive/Documentos/GitHub/Cartorio/.claude/**)",
+      "Bash(ls -la tests/)",
+      "Bash(ls -la relatorios/)",
+      "Bash(node -e \"const ajv = require\\('ajv'\\); console.log\\('ajv ok'\\)\")",
+      "Bash(node -e \"const f = require\\('ajv-formats'\\); console.log\\('ajv-formats ok'\\)\")",
+      "Bash(npx ts-node *)",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(mkdir -p \"corpus/anonimizados/ESC-BOA\" \"corpus/anonimizados/ESC-DEG\" \"corpus/anonimizados/MAT-ATUAL-BOA\")",
+      "Bash(touch \"corpus/anonimizados/ESC-BOA/escritura_boa_001.pdf\" \"corpus/anonimizados/ESC-DEG/escritura_degradada_001.pdf\" \"corpus/anonimizados/MAT-ATUAL-BOA/matricula_boa_001.pdf\")"
     ]
   }
 }

@@ -45,3 +45,5 @@ Full list in `rules/absolute-prohibitions.md`.
 ## How this folder evolves
 
 The `.claude` folder is frozen for the duration of Phase 0 execution. Any change requires explicit approval from the technical lead and must be recorded in the execution log (`relatorios/log_execucao.md`). Undocumented changes are treated as scope drift.
+
+
