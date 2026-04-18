@@ -303,3 +303,50 @@ TEST 4: validar_ground_truth.ts vs gt_invalido/ (escritura_boa_001_gt.json)
 
 **Next activity:** BLOCO 5C (awaiting technical lead authorization)
 
+
+---
+
+## [2026-04-18 00:00] Activity: BLOCO 5C — Teste de anonimização com PDFs sintéticos
+
+**Status:** CONCLUDED
+**Duration:** ~1 hour
+**Summary:** Gerados 2 PDFs sintéticos (escritura e matrícula) com PyMuPDF, com CPF 000.000.000-00, nome FULANO DE TAL SINTETICO, endereço RUA INEXISTENTE 999 — todos claramente fictícios. Gerados CSVs de controle com coordenadas exatas extraídas via `page.search_for()`. Bug detectado e corrigido em `anonimizar_documento.py` (ver DECISION-10). Anonimização re-executada com API correta. Verificação completa passou em ambos os documentos.
+
+**Bug detectado (DECISION-10):** Implementação original de `anonimizar_documento.py` usava `draw_rect` + `insert_text` — cobertura apenas visual; texto sensível permanecia no content stream. Corrigido para `add_redact_annot` + `apply_redactions`, que remove o conteúdo do stream. PDFs geridos por versão anterior (apenas sintéticos de teste) regerados.
+
+**Arquivos gerados:**
+- tests/fixtures/sintetico_escritura_001.pdf
+- tests/fixtures/sintetico_matricula_001.pdf
+- tests/fixtures/sintetico_escritura_001_controle.csv
+- tests/fixtures/sintetico_matricula_001_controle.csv
+- tests/fixtures/sintetico_escritura_001_anonimizado.pdf
+- tests/fixtures/sintetico_matricula_001_anonimizado.pdf
+- tests/fixtures/gerar_sinteticos_5c.py (gerador)
+- tests/fixtures/verificar_anonimizacao_5c.py (verificador)
+
+**Arquivos modificados:**
+- scripts/anonimizar_documento.py (lógica de redação corrigida — DECISION-10)
+- decisoes/decisao_anonimizacao_redacao.md (nova — DECISION-10)
+
+**Resultados da verificação (ambos os PDFs: escritura e matrícula):**
+
+| Verificação | escritura | matrícula |
+|---|---|---|
+| Texto original ausente no text layer (`000.000.000-00`) | SIM | SIM |
+| Texto original ausente no text layer (`FULANO DE TAL SINTETICO`) | SIM | SIM |
+| Texto original ausente no text layer (`RUA INEXISTENTE, 999`) | SIM | SIM |
+| Placeholder `[CPF SUPRIMIDO]` presente | SIM | SIM |
+| Placeholder `[NOME SUPRIMIDO]` presente | SIM | SIM |
+| Placeholder `[ENDERECO SUPRIMIDO]` presente | SIM | SIM |
+| OCR Tesseract: CPF `000.000.000-00` encontrado (não-placeholder) | NÃO | NÃO |
+| Exit code do verificador | 0 (PASS) | 0 (PASS) |
+
+**OCR INFO (não-erro):** Tesseract encontrou `111.111.111-11` (CPF do comprador BELTRANA SINTETICA — não redatado, não é o CPF sensível marcado no CSV) e `222.222.222-22` (matrícula, CPF de CICLANO SINTETICO — idem). Esses não são o CPF marcado para redação (`000.000.000-00`) e sua presença é esperada.
+
+**Issues encountered:**
+1. BUG anonimizar_documento.py — draw_rect não remove texto do stream → DECISION-10; corrigido antes de reportar.
+2. CSV inicial cobria apenas primeira ocorrência de FULANO DE TAL SINTETICO (linha "Nome:"); a linha de assinatura (y≈475) também continha o nome e não estava no CSV → generator atualizado para usar `extract_all_rects_for_text` e cobrir todas as ocorrências.
+
+**Confirmação de dados:** Todos os PDFs usam dados claramente fictícios (CPF 000.000.000-00, nomes SINTETICO, endereço INEXISTENTE). Nenhum dado real foi utilizado.
+
+**Next activity:** BLOCO 5D (aguardando autorização do líder técnico)
