@@ -350,3 +350,72 @@ TEST 4: validar_ground_truth.ts vs gt_invalido/ (escritura_boa_001_gt.json)
 **Confirmação de dados:** Todos os PDFs usam dados claramente fictícios (CPF 000.000.000-00, nomes SINTETICO, endereço INEXISTENTE). Nenhum dado real foi utilizado.
 
 **Next activity:** BLOCO 5D (aguardando autorização do líder técnico)
+
+---
+
+## [2026-04-18 00:00] SANITY CHECK — rasterization environment validation (NOT the official benchmark of Activity #6)
+
+**Bloco:** 5D
+**Status:** CONCLUDED
+**Duration:** < 5 minutes
+
+**Disclaimer:** This is NOT the official rasterization benchmark (Activity #6). The official benchmark:
+- Uses real corpus documents (not synthetic fixtures)
+- Processes 20 specific documents selected by representativeness quotas
+- Tests both 300 DPI and 400 DPI
+- Generates `benchmarks/rasterizacao/resultados_rasterizacao.json` validated against schema
+- Feeds Gate 1 decision
+
+This sanity check only confirms that both rasterization engines are functional in the current Windows environment.
+
+**Input:** `tests/fixtures/sintetico_escritura_001.pdf` (synthetic fixture from BLOCO 5C)
+**Script:** `temp/sanity_rasterizacao_5d.mjs` (temp only — not a benchmark artifact)
+
+**Environment:**
+- Node.js: v20.20.0
+- Python: 3.14.4
+- pdftoppm (Poppler): 25.12.0
+- mupdf npm package: loaded (ESM)
+- OS: Windows 11
+
+**Results:**
+
+| Engine | Dimensions (px) | File size (bytes) | Elapsed (ms) |
+|---|---|---|---|
+| mupdf (npm) | 2480 × 3509 | 221 911 | 314 |
+| poppler / pdftoppm | 2480 × 3509 | 208 277 | 812 |
+
+**Notes:**
+- Both engines produced identical dimensions (2480 × 3509 px), consistent with A4 at 300 DPI (210 mm × 297 mm → 2480 × 3508 px ± 1 rounding).
+- mupdf was ~2.6× faster than pdftoppm on this single synthetic page (314 ms vs 812 ms). This observation carries NO benchmark weight — the official benchmark uses 20 real corpus documents.
+- Both output PNGs were deleted after measurement (`temp/` is gitignored; cleanup confirmed).
+
+**Outputs:**
+- No persistent artifacts (temp PNGs deleted per spec)
+- This log entry
+
+**Issues encountered:** None
+
+**Next activity:** Awaiting technical lead review and authorization before any further activities.
+
+---
+
+## [2026-04-18 00:15] CONSOLIDATION — Preparatory blocks 5A-5D CONCLUDED
+
+**Status:** CONCLUDED
+**Duration:** ~6 hours total across 4 blocks (5A: ~2h, 5B: ~2h, 5C: ~1.5h, 5D: <5min)
+**Summary:** All four preparatory blocks authorized by the technical lead during corpus unavailability period are complete. Environment and tooling validated. Bug in plan v1.3 anonymization script discovered and corrected before real corpus arrival.
+**Outputs:**
+- scripts/schemas/ — 8 JSON schemas (ajv draft-07 + ajv-formats)
+- scripts/validar_corpus_catalog.ts — full logic implementation
+- scripts/validar_ground_truth.ts — full logic implementation
+- scripts/anonimizar_documento.py — corrected implementation (redaction instead of visual cover)
+- tests/fixtures/ — synthetic PDFs, CSVs, valid/invalid catalog fixtures, valid/invalid ground truth fixtures
+- tests/fixtures/gerar_sinteticos_5c.py — reproducible fixture generation
+- tests/fixtures/verificar_anonimizacao_5c.py — reproducible anonymization verification
+- decisoes/decisao_setup_ambiente.md — 9 decisions logged (DECISION-1 to DECISION-9 + schema interpretation decisions DECISION-5A-1 to 5A-4)
+- decisoes/decisao_anonimizacao_redacao.md — 2 decisions logged (DECISION-10 redaction fix + DECISION-11 reinforced verification protocol)
+**Issues encountered:**
+- DECISION-10 identified a PII leak risk in the plan v1.3 Section 3.2.2 anonymization script. Corrected before any real corpus exposure. Carry-forward registered to final report.
+**Next activity:** Activity #2 (Coleta do corpus) — BLOCKED pending corpus delivery from cartório-alvo.
+**Gate status:** Gate 1 open (no gate approved yet).
