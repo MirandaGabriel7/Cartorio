@@ -1,0 +1,230 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "JSON Schema for benchmarks/preprocessamento/preprocessamento_resultados.json. Contract: .claude/schemas/preprocessing-results.md. Sub-objects with relaxed additionalProperties: (1) agregados_por_experimento — keys are dynamic experiment IDs (A, B, C, D, E, F, EXPERIMENT_E_v2, etc.); (2) ExperimentDefinition.parametros — free-form experiment-specific parameters. Cross-consistency rules (every calibration doc in every experiment, winning experiment conditions) are enforced by validator script.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "data",
+    "ambiente_execucao",
+    "biblioteca_rasterizacao",
+    "dpi",
+    "corpus_calibracao_total",
+    "experimentos",
+    "resultados",
+    "inspecao_visual",
+    "deteccoes_marca_dagua",
+    "agregados_por_experimento",
+    "experimento_vencedor",
+    "gate_1_preprocessamento_sub_criterios"
+  ],
+  "properties": {
+    "data": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ambiente_execucao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "python_version", "opencv_version", "node_version"],
+      "properties": {
+        "os":             { "type": "string", "minLength": 1 },
+        "python_version": { "type": "string", "minLength": 1 },
+        "opencv_version": { "type": "string", "minLength": 1 },
+        "node_version":   { "type": "string", "minLength": 1 }
+      }
+    },
+    "biblioteca_rasterizacao": {
+      "type": "string",
+      "enum": ["mupdf", "poppler"]
+    },
+    "dpi": {
+      "type": "integer",
+      "enum": [300, 400]
+    },
+    "corpus_calibracao_total": {
+      "$comment": "Must equal 30 per plan.",
+      "type": "integer",
+      "const": 30
+    },
+    "experimentos": {
+      "$comment": "All six base experiments (A–F) must be defined; re-runs add new entries (EXPERIMENT_E_v2, etc.).",
+      "type": "array",
+      "minItems": 6,
+      "items": { "$ref": "#/definitions/ExperimentDefinition" }
+    },
+    "resultados": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/PreprocResult" }
+    },
+    "inspecao_visual": {
+      "$comment": "At least 5 inspections per experiment required; enforced by validator script.",
+      "type": "array",
+      "items": { "$ref": "#/definitions/ExperimentVisualInspection" }
+    },
+    "deteccoes_marca_dagua": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/WatermarkDetection" }
+    },
+    "agregados_por_experimento": {
+      "$comment": "additionalProperties: true — keys are dynamic experiment IDs matching experimentos[].id.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/ExperimentAggregate" }
+    },
+    "experimento_vencedor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gate_1_preprocessamento_sub_criterios": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reducao_cer_geral_pct",
+        "condicao_1_reducao_cer_20pct",
+        "taxa_filtragem_marca_dagua_pct",
+        "condicao_2_filtragem_95pct",
+        "condicao_3_sem_perda_texto_legitimo"
+      ],
+      "properties": {
+        "reducao_cer_geral_pct":         { "type": "number" },
+        "condicao_1_reducao_cer_20pct":  { "type": "boolean" },
+        "taxa_filtragem_marca_dagua_pct":{ "type": "number", "minimum": 0, "maximum": 100 },
+        "condicao_2_filtragem_95pct":    { "type": "boolean" },
+        "condicao_3_sem_perda_texto_legitimo": { "type": "boolean" }
+      }
+    }
+  },
+  "definitions": {
+    "ExperimentDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "descricao", "sequencia", "parametros"],
+      "properties": {
+        "id":        { "type": "string", "minLength": 1 },
+        "descricao": { "type": "string", "minLength": 1 },
+        "sequencia": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "parametros": {
+          "$comment": "additionalProperties: true — structure is experiment-specific and cannot be statically defined.",
+          "type": "object"
+        }
+      }
+    },
+    "PreprocResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documento_id", "pagina", "experimento", "tempo_ms",
+        "cer_texto_geral", "cer_cpf", "cer_nomes", "cer_matricula",
+        "cer_reducao_vs_A_pct",
+        "marca_dagua_lateral_detectada", "marca_dagua_diagonal_detectada",
+        "marca_dagua_atenuada", "rodape_sistema_detectado",
+        "inspecao_visual", "erro"
+      ],
+      "properties": {
+        "documento_id":   { "type": "string", "minLength": 1 },
+        "pagina":         { "type": "integer", "minimum": 1 },
+        "experimento":    { "type": "string",  "minLength": 1 },
+        "tempo_ms":       { "type": "number",  "minimum": 0 },
+        "cer_texto_geral":{ "type": "number",  "minimum": 0, "maximum": 1 },
+        "cer_cpf":        { "type": "number",  "minimum": 0, "maximum": 1 },
+        "cer_nomes":      { "type": "number",  "minimum": 0, "maximum": 1 },
+        "cer_matricula":  { "type": "number",  "minimum": 0, "maximum": 1 },
+        "cer_reducao_vs_A_pct": {
+          "$comment": "null for experiment A; numeric for all others.",
+          "type": ["number", "null"]
+        },
+        "marca_dagua_lateral_detectada":   { "type": "boolean" },
+        "marca_dagua_diagonal_detectada":  { "type": "boolean" },
+        "marca_dagua_atenuada":            { "type": "boolean" },
+        "rodape_sistema_detectado":        { "type": "boolean" },
+        "inspecao_visual": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "texto_legivel", "sem_inversao", "sem_perda_caracteres",
+            "marca_dagua_atenuada", "bordas_preservadas"
+          ],
+          "properties": {
+            "texto_legivel":          { "type": "boolean" },
+            "sem_inversao":           { "type": "boolean" },
+            "sem_perda_caracteres":   { "type": "boolean" },
+            "marca_dagua_atenuada":   {
+              "$comment": "null when no watermark is expected on this page.",
+              "type": ["boolean", "null"]
+            },
+            "bordas_preservadas":     { "type": "boolean" }
+          }
+        },
+        "erro": { "type": ["string", "null"] }
+      }
+    },
+    "ExperimentVisualInspection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["experimento", "paginas_inspecionadas", "inspetor", "observacoes"],
+      "properties": {
+        "experimento": { "type": "string", "minLength": 1 },
+        "paginas_inspecionadas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["documento_id", "pagina"],
+            "properties": {
+              "documento_id": { "type": "string", "minLength": 1 },
+              "pagina":       { "type": "integer", "minimum": 1 }
+            }
+          }
+        },
+        "inspetor":    { "type": "string", "minLength": 1 },
+        "observacoes": { "type": "string" }
+      }
+    },
+    "WatermarkDetection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documento_id", "pagina", "esperada_no_catalogo", "detectada",
+        "tipo", "atenuada_com_sucesso", "texto_legitimo_preservado"
+      ],
+      "properties": {
+        "documento_id":            { "type": "string",  "minLength": 1 },
+        "pagina":                  { "type": "integer", "minimum": 1 },
+        "esperada_no_catalogo":    { "type": "boolean" },
+        "detectada":               { "type": "boolean" },
+        "tipo": {
+          "type": "string",
+          "enum": ["LATERAL", "DIAGONAL", "AMBAS", "NENHUMA"]
+        },
+        "atenuada_com_sucesso":    { "type": "boolean" },
+        "texto_legitimo_preservado": { "type": "boolean" }
+      }
+    },
+    "ExperimentAggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cer_texto_geral_medio",
+        "cer_cpf_medio",
+        "cer_nomes_medio",
+        "cer_matricula_medio",
+        "reducao_cer_geral_pct_vs_A",
+        "taxa_deteccao_marca_dagua_pct",
+        "taxa_atenuacao_correta_pct",
+        "paginas_com_perda_texto_legitimo"
+      ],
+      "properties": {
+        "cer_texto_geral_medio":          { "type": "number", "minimum": 0, "maximum": 1 },
+        "cer_cpf_medio":                  { "type": "number", "minimum": 0, "maximum": 1 },
+        "cer_nomes_medio":                { "type": "number", "minimum": 0, "maximum": 1 },
+        "cer_matricula_medio":            { "type": "number", "minimum": 0, "maximum": 1 },
+        "reducao_cer_geral_pct_vs_A":     { "type": "number" },
+        "taxa_deteccao_marca_dagua_pct":  { "type": "number", "minimum": 0, "maximum": 100 },
+        "taxa_atenuacao_correta_pct":     { "type": "number", "minimum": 0, "maximum": 100 },
+        "paginas_com_perda_texto_legitimo": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

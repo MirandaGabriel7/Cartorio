@@ -1,0 +1,192 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "JSON Schema for baseline/fase0_baseline_v1.json. Contract: .claude/schemas/baseline-v1.md. Sub-objects with relaxed additionalProperties: (1) DocumentBaseline.campos_extraidos — keys are dynamic field names from the anchor catalog. This file is frozen after Gate 3 approval and must not be edited. Consistency rules (hash verification, versao_pipeline matching decision files, calibration corpus coverage) are enforced by benchmarks/scripts/comparar_baseline.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "versao_baseline",
+    "data_congelamento",
+    "hash_arquivo",
+    "ambiente_execucao",
+    "versao_pipeline",
+    "corpus_calibracao_total",
+    "metricas_globais",
+    "documentos",
+    "fontes"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "baseline_schema"
+    },
+    "versao_baseline": {
+      "type": "string",
+      "const": "fase0_v1"
+    },
+    "data_congelamento": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "hash_arquivo": {
+      "$comment": "SHA-256 of the file per the freeze protocol. Two acceptable formats: 'sha256:<64 hex chars>' (in-file hash) or a reference to the sidecar file path. Pattern enforces the in-file format; sidecar-only references accepted as any non-empty string.",
+      "type": "string",
+      "minLength": 1
+    },
+    "ambiente_execucao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "node_version", "python_version"],
+      "properties": {
+        "os":             { "type": "string", "minLength": 1 },
+        "node_version":   { "type": "string", "minLength": 1 },
+        "python_version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "versao_pipeline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "motor_ocr",
+        "perfil_preprocessamento",
+        "biblioteca_rasterizacao",
+        "dpi_rasterizacao",
+        "parser_sketch_versao"
+      ],
+      "properties": {
+        "motor_ocr":              { "type": "string", "minLength": 1 },
+        "perfil_preprocessamento":{ "type": "string", "minLength": 1 },
+        "biblioteca_rasterizacao":{ "type": "string", "enum": ["mupdf", "poppler"] },
+        "dpi_rasterizacao":       { "type": "integer", "enum": [300, 400] },
+        "parser_sketch_versao":   { "type": "string", "minLength": 1 }
+      }
+    },
+    "corpus_calibracao_total": {
+      "type": "integer",
+      "const": 30
+    },
+    "metricas_globais": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cer_cpf_cnpj",
+        "cer_matricula",
+        "cer_nomes",
+        "cer_texto_geral",
+        "parser_acerto_cpf",
+        "parser_acerto_matricula",
+        "parser_acerto_nome",
+        "tempo_medio_ocr_por_pagina_ms",
+        "tempo_medio_rasterizacao_por_pagina_ms"
+      ],
+      "properties": {
+        "cer_cpf_cnpj":                        { "type": "number", "minimum": 0, "maximum": 1 },
+        "cer_matricula":                        { "type": "number", "minimum": 0, "maximum": 1 },
+        "cer_nomes":                            { "type": "number", "minimum": 0, "maximum": 1 },
+        "cer_texto_geral":                      { "type": "number", "minimum": 0, "maximum": 1 },
+        "parser_acerto_cpf":                    { "type": "number", "minimum": 0, "maximum": 1 },
+        "parser_acerto_matricula":              { "type": "number", "minimum": 0, "maximum": 1 },
+        "parser_acerto_nome":                   { "type": "number", "minimum": 0, "maximum": 1 },
+        "tempo_medio_ocr_por_pagina_ms":        { "type": "number", "minimum": 0 },
+        "tempo_medio_rasterizacao_por_pagina_ms":{ "type": "number", "minimum": 0 }
+      }
+    },
+    "documentos": {
+      "type": "array",
+      "minItems": 30,
+      "maxItems": 30,
+      "items": { "$ref": "#/definitions/DocumentBaseline" }
+    },
+    "fontes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decisao_rasterizacao",
+        "decisao_motor_ocr",
+        "decisao_parser_sketch",
+        "resultados_rasterizacao",
+        "resultados_preprocessamento",
+        "ocr_benchmark_relatorio",
+        "catalogo_ancoras",
+        "parser_sketch_resultados"
+      ],
+      "properties": {
+        "decisao_rasterizacao":        { "type": "string", "minLength": 1 },
+        "decisao_motor_ocr":           { "type": "string", "minLength": 1 },
+        "decisao_parser_sketch":       { "type": "string", "minLength": 1 },
+        "resultados_rasterizacao":     { "type": "string", "minLength": 1 },
+        "resultados_preprocessamento": { "type": "string", "minLength": 1 },
+        "ocr_benchmark_relatorio":     { "type": "string", "minLength": 1 },
+        "catalogo_ancoras":            { "type": "string", "minLength": 1 },
+        "parser_sketch_resultados":    { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "definitions": {
+    "DocumentBaseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documento_id", "tipo", "versao_pipeline", "motor_ocr",
+        "perfil_preprocessamento", "campos_extraidos", "metricas_pagina"
+      ],
+      "properties": {
+        "documento_id": { "type": "string", "minLength": 1 },
+        "tipo": {
+          "type": "string",
+          "enum": ["ESCRITURA_COMPRA_VENDA", "MATRICULA"]
+        },
+        "versao_pipeline": {
+          "$comment": "Must always be 'fase0_v1' per baseline freeze rules.",
+          "type": "string",
+          "const": "fase0_v1"
+        },
+        "motor_ocr":              { "type": "string", "minLength": 1 },
+        "perfil_preprocessamento":{ "type": "string", "minLength": 1 },
+        "campos_extraidos": {
+          "$comment": "additionalProperties: true — keys are dynamic field names from the anchor catalog.",
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/FieldBaseline" }
+        },
+        "metricas_pagina": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/PageMetric" }
+        }
+      }
+    },
+    "FieldBaseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "valor_extraido", "valor_ground_truth",
+        "acerto", "confianca_ocr", "metodo_extracao"
+      ],
+      "properties": {
+        "valor_extraido":    { "type": ["string", "null"] },
+        "valor_ground_truth":{ "type": ["string", "null"] },
+        "acerto":            { "type": "boolean" },
+        "confianca_ocr":     { "type": "number", "minimum": 0, "maximum": 1 },
+        "metodo_extracao": {
+          "type": "string",
+          "enum": ["REGEX_ROTULO", "PADRAO_FIXO", "HEURISTICA"]
+        }
+      }
+    },
+    "PageMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pagina", "cer_texto_geral", "confianca_media_ocr",
+        "marca_dagua_detectada", "rodape_filtrado"
+      ],
+      "properties": {
+        "pagina":                 { "type": "integer", "minimum": 1 },
+        "cer_texto_geral":        { "type": "number",  "minimum": 0, "maximum": 1 },
+        "confianca_media_ocr":    { "type": "number",  "minimum": 0, "maximum": 1 },
+        "marca_dagua_detectada":  { "type": "boolean" },
+        "rodape_filtrado":        { "type": "boolean" }
+      }
+    }
+  }
+}

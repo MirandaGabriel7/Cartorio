@@ -1,0 +1,217 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "JSON Schema for parser_sketch/parser_sketch_resultados.json. Contract: .claude/schemas/parser-sketch-results.md. Sub-objects with relaxed additionalProperties: (1) resultados_por_campo — keys are dynamic field names matching the anchor catalog; (2) DocumentResult.campos_extraidos — same dynamic field names. Cross-consistency rules (acertos+erros+nao_localizados==total_analisados, fonte_ocr consistency with Gate 2 output) are enforced by validator script.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "versao",
+    "data",
+    "ambiente_execucao",
+    "fonte_ocr",
+    "corpus_calibracao_total",
+    "normalizacao",
+    "resultados_por_campo",
+    "resultados_por_documento",
+    "gate_3_criterios",
+    "campos_abaixo_do_limiar"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "parser_sketch_resultados_schema"
+    },
+    "versao": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "data": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ambiente_execucao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_version", "parser_sketch_versao"],
+      "properties": {
+        "node_version":         { "type": "string", "minLength": 1 },
+        "parser_sketch_versao": { "type": "string", "minLength": 1 }
+      }
+    },
+    "fonte_ocr": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "motor", "motor_versao", "perfil_preprocessamento",
+        "biblioteca_rasterizacao", "dpi"
+      ],
+      "properties": {
+        "motor":                    { "type": "string", "enum": ["tesseract", "paddleocr"] },
+        "motor_versao":             { "type": "string", "minLength": 1 },
+        "perfil_preprocessamento":  { "type": "string", "minLength": 1 },
+        "biblioteca_rasterizacao":  { "type": "string", "enum": ["mupdf", "poppler"] },
+        "dpi":                      { "type": "integer", "enum": [300, 400] }
+      }
+    },
+    "corpus_calibracao_total": {
+      "type": "integer",
+      "const": 30
+    },
+    "normalizacao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["descricao"],
+      "properties": {
+        "descricao": { "type": "string", "minLength": 1 }
+      }
+    },
+    "resultados_por_campo": {
+      "$comment": "additionalProperties: true — keys are dynamic priority field names from the anchor catalog (transmitente_1_cpf, matricula, etc.).",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/FieldAccuracy" }
+    },
+    "resultados_por_documento": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/DocumentResult" }
+    },
+    "gate_3_criterios": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transmitente_1_cpf_acerto",
+        "matricula_escritura_acerto",
+        "matricula_numero_matricula_acerto",
+        "transmitente_1_nome_acerto",
+        "proprietario_1_nome_acerto",
+        "criticos_todos_aprovados",
+        "cobertura_ancoras_campos_pct",
+        "cobertura_ancoras_documentos_pct",
+        "condicao_cobertura_aprovada"
+      ],
+      "properties": {
+        "transmitente_1_cpf_acerto":       { "type": "number", "minimum": 0, "maximum": 1 },
+        "matricula_escritura_acerto":       { "type": "number", "minimum": 0, "maximum": 1 },
+        "matricula_numero_matricula_acerto":{ "type": "number", "minimum": 0, "maximum": 1 },
+        "transmitente_1_nome_acerto":       { "type": "number", "minimum": 0, "maximum": 1 },
+        "proprietario_1_nome_acerto":       { "type": "number", "minimum": 0, "maximum": 1 },
+        "criticos_todos_aprovados":         { "type": "boolean" },
+        "cobertura_ancoras_campos_pct":     { "type": "number", "minimum": 0, "maximum": 100 },
+        "cobertura_ancoras_documentos_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+        "condicao_cobertura_aprovada":      { "type": "boolean" }
+      }
+    },
+    "campos_abaixo_do_limiar": {
+      "$comment": "Empty array when all priority fields meet their thresholds.",
+      "type": "array",
+      "items": { "$ref": "#/definitions/FieldBelowThreshold" }
+    }
+  },
+  "definitions": {
+    "FieldAccuracy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "campo", "prioridade", "criticidade",
+        "acertos", "erros", "nao_localizados", "total_analisados",
+        "taxa_acerto", "limiar_aplicavel", "aprovado",
+        "metodo_mais_usado", "alertas_comuns"
+      ],
+      "properties": {
+        "campo":            { "type": "string", "minLength": 1 },
+        "prioridade":       { "type": "integer", "minimum": 1 },
+        "criticidade":      { "type": "string", "enum": ["CRITICO", "NAO_CRITICO"] },
+        "acertos":          { "type": "integer", "minimum": 0 },
+        "erros":            { "type": "integer", "minimum": 0 },
+        "nao_localizados":  { "type": "integer", "minimum": 0 },
+        "total_analisados": { "type": "integer", "minimum": 0 },
+        "taxa_acerto":      { "type": "number",  "minimum": 0, "maximum": 1 },
+        "limiar_aplicavel": {
+          "$comment": "0.85 for CRITICO fields, null for NAO_CRITICO.",
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "aprovado": {
+          "$comment": "boolean for CRITICO fields (taxa_acerto >= 0.85), null for NAO_CRITICO.",
+          "type": ["boolean", "null"]
+        },
+        "metodo_mais_usado": {
+          "type": "string",
+          "enum": ["REGEX_ROTULO", "PADRAO_FIXO", "HEURISTICA"]
+        },
+        "alertas_comuns": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "DocumentResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documento_id", "tipo", "campos_extraidos",
+        "total_campos_prioridade", "total_acertos", "cobertura_percentual"
+      ],
+      "properties": {
+        "documento_id": { "type": "string", "minLength": 1 },
+        "tipo": {
+          "type": "string",
+          "enum": ["ESCRITURA_COMPRA_VENDA", "MATRICULA"]
+        },
+        "campos_extraidos": {
+          "$comment": "additionalProperties: true — keys are dynamic priority field names.",
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/FieldExtraction" }
+        },
+        "total_campos_prioridade": { "type": "integer", "minimum": 0 },
+        "total_acertos":           { "type": "integer", "minimum": 0 },
+        "cobertura_percentual":    { "type": "number",  "minimum": 0, "maximum": 100 }
+      }
+    },
+    "FieldExtraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "valor_extraido_normalizado",
+        "valor_ground_truth_normalizado",
+        "classificacao",
+        "metodo",
+        "confianca_estimada",
+        "alertas"
+      ],
+      "properties": {
+        "valor_extraido_normalizado":    { "type": ["string", "null"] },
+        "valor_ground_truth_normalizado":{ "type": ["string", "null"] },
+        "classificacao": {
+          "type": "string",
+          "enum": ["ACERTO", "ERRO", "NAO_LOCALIZADO"]
+        },
+        "metodo": {
+          "type": "string",
+          "enum": ["REGEX_ROTULO", "PADRAO_FIXO", "HEURISTICA"]
+        },
+        "confianca_estimada": { "type": "number", "minimum": 0, "maximum": 1 },
+        "alertas": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "FieldBelowThreshold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "campo", "taxa_acerto", "limiar",
+        "criticidade", "padrao_de_falha", "acao_proposta_fase_1"
+      ],
+      "properties": {
+        "campo":               { "type": "string",  "minLength": 1 },
+        "taxa_acerto":         { "type": "number",  "minimum": 0, "maximum": 1 },
+        "limiar":              { "type": "number",  "minimum": 0, "maximum": 1 },
+        "criticidade":         { "type": "string",  "enum": ["CRITICO", "NAO_CRITICO"] },
+        "padrao_de_falha":     { "type": "string",  "minLength": 1 },
+        "acao_proposta_fase_1":{ "type": "string",  "minLength": 1 }
+      }
+    }
+  }
+}

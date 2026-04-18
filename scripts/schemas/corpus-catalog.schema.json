@@ -1,0 +1,187 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "JSON Schema for corpus/corpus_catalog.json. Contract: .claude/schemas/corpus-catalog.md. All DocumentoEntry fields are statically named — no dynamic-key relaxation at this level. tipos_onus is an open string array (ônus type vocabulary not enumerated in the plan schema contract).",
+  "type": "object",
+  "title": "Corpus Catalog",
+  "additionalProperties": false,
+  "required": ["$schema", "versao", "data_criacao", "total_documentos", "documentos"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "corpus_catalog_schema"
+    },
+    "versao": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "data_criacao": {
+      "type": "string",
+      "format": "date"
+    },
+    "total_documentos": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "documentos": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/DocumentoEntry"
+      }
+    }
+  },
+  "definitions": {
+    "DocumentoEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documento_id",
+        "arquivo",
+        "tipo_documento",
+        "categoria_corpus",
+        "classificacao_qualidade",
+        "total_paginas",
+        "tem_texto_nativo",
+        "marcas_dagua_presentes",
+        "tipo_marca_dagua",
+        "rodapes_sistema_presentes",
+        "formato_matricula",
+        "tem_onus",
+        "tipos_onus",
+        "tem_transporte_ficha",
+        "total_transmitentes",
+        "transmitente_pj",
+        "assinatura_rogo",
+        "urbano_ou_rural",
+        "municipio_origem",
+        "anonimizacao_verificada",
+        "data_coleta",
+        "coletado_por",
+        "ground_truth_disponivel",
+        "ground_truth_arquivo",
+        "observacoes",
+        "status"
+      ],
+      "properties": {
+        "documento_id": {
+          "$comment": "Format {tipo}_{qualidade_code}_{seq:3} per Section 3.3.1 of the plan. Semantic validation that tipo segment matches tipo_documento is enforced by scripts/validar_corpus_catalog.ts (cannot be expressed in JSON Schema alone).",
+          "type": "string",
+          "pattern": "^(escritura|matricula)_(boa|degradada|baixa|nativa|mono|onus|rural|transporte|multi|pj|rogo|marca|prenot)_\\d{3}$"
+        },
+        "arquivo": {
+          "type": "string",
+          "pattern": "^corpus/anonimizados/"
+        },
+        "tipo_documento": {
+          "type": "string",
+          "enum": ["ESCRITURA_COMPRA_VENDA", "MATRICULA"]
+        },
+        "categoria_corpus": {
+          "$comment": "Category codes per Section 3.1 of the plan.",
+          "type": "string",
+          "enum": [
+            "MAT-ATUAL-BOA",
+            "MAT-ATUAL-DEG",
+            "MAT-MONO",
+            "MAT-ONUS",
+            "MAT-RURAL",
+            "MAT-TRANSP",
+            "ESC-NATIVA",
+            "ESC-BOA",
+            "ESC-DEG",
+            "ESC-BAIXA",
+            "ESC-MULTI",
+            "ESC-PJ",
+            "ESC-ROGO",
+            "ESC-MARCA",
+            "ESC-PRENOT"
+          ]
+        },
+        "classificacao_qualidade": {
+          "$comment": "Scanning quality of the document, independent of the qualidade code in documento_id.",
+          "type": "string",
+          "enum": ["BOA", "DEGRADADA", "BAIXA", "NATIVA"]
+        },
+        "total_paginas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tem_texto_nativo": {
+          "type": "boolean"
+        },
+        "marcas_dagua_presentes": {
+          "type": "boolean"
+        },
+        "tipo_marca_dagua": {
+          "type": ["string", "null"],
+          "enum": ["LATERAL", "DIAGONAL", "AMBAS", null]
+        },
+        "rodapes_sistema_presentes": {
+          "type": "boolean"
+        },
+        "formato_matricula": {
+          "$comment": "null for ESCRITURA_COMPRA_VENDA documents per validation rule 6.",
+          "type": ["string", "null"],
+          "enum": ["ATUAL", "MONO", "MISTA", null]
+        },
+        "tem_onus": {
+          "type": "boolean"
+        },
+        "tipos_onus": {
+          "$comment": "Empty array when no ônus present. String vocabulary not enumerated in schema contract.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tem_transporte_ficha": {
+          "type": "boolean"
+        },
+        "total_transmitentes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "transmitente_pj": {
+          "type": "boolean"
+        },
+        "assinatura_rogo": {
+          "type": "boolean"
+        },
+        "urbano_ou_rural": {
+          "type": "string",
+          "enum": ["URBANO", "RURAL"]
+        },
+        "municipio_origem": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anonimizacao_verificada": {
+          "type": "boolean"
+        },
+        "data_coleta": {
+          "type": "string",
+          "format": "date"
+        },
+        "coletado_por": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ground_truth_disponivel": {
+          "type": "boolean"
+        },
+        "ground_truth_arquivo": {
+          "$comment": "Non-null when ground_truth_disponivel is true; semantic constraint enforced by validator script.",
+          "type": ["string", "null"]
+        },
+        "observacoes": {
+          "$comment": "Free-form text; empty string allowed, null is not.",
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["OK", "ERRO", "EXCLUIDO"]
+        }
+      }
+    }
+  }
+}

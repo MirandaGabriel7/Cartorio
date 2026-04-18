@@ -256,3 +256,124 @@
 **Evidence artifacts:**
 
 - `requirements-lock.txt` (contém `opencv-contrib-python==4.6.0.66`, `opencv-python==4.6.0.66`, `opencv-python-headless==4.9.0.80`)
+
+---
+
+## Schema interpretation decisions — BLOCO 5A
+
+*These four decisions resolve ambiguities in the plan's schema contract that required interpretation during the implementation of the 8 JSON Schemas (Bloco 5A). Retroactively approved by the technical lead in the review message of 2026-04-17.*
+
+---
+
+### Technical decision [2026-04-17] — DECISION-5A-1: documento_id pattern — Option A (simple cross-product regex)
+
+**Context:** The plan (Section 3.3.1) defines `documento_id` as `{tipo}_{qualidade_code}_{seq:3}` with 2 tipo values (escritura, matricula) and 13 qualidade codes (boa, degradada, baixa, nativa, mono, onus, rural, transporte, multi, pj, rogo, marca, prenot). The schema contract requires a `pattern` constraint. Two implementation options exist: (A) a flat cross-product regex accepting any tipo×qualidade combination, or (B) a regex with conditional alternation enforcing which qualidade codes apply to each tipo (e.g., mono is only semantically valid for matriculas).
+
+**Alternatives considered:**
+
+1. Option A — `^(escritura|matricula)_(boa|degradada|baixa|nativa|mono|onus|rural|transporte|multi|pj|rogo|marca|prenot)_\d{3}$` — simple, anchored, enforces the 13-value vocabulary and 3-digit sequential; accepts semantically invalid combinations (e.g., `escritura_mono_001`). Semantic tipo×qualidade enforcement delegated to the human cataloguer and validator script.
+2. Option B — alternation with two branches: `^escritura_(boa|degradada|baixa|nativa|multi|pj|rogo|marca|prenot)_\d{3}$|^matricula_(boa|degradada|baixa|mono|onus|rural|transporte)_\d{3}$` — enforces semantic validity; harder to maintain if qualidade set evolves; requires mapping not explicitly enumerated in plan v1.3.
+
+**Decision taken:** Option A. Regex: `^(escritura|matricula)_(boa|degradada|baixa|nativa|mono|onus|rural|transporte|multi|pj|rogo|marca|prenot)_\d{3}$`
+
+**Justification:** Plan Section 3.3.1 lists 13 qualidade codes without explicitly mapping them to tipos. The cross-product regex faithfully captures the vocabulary as written. Semantic enforcement (which qualidade applies to which tipo) is a cataloguing discipline, properly enforced by `scripts/validar_corpus_catalog.ts` and human review — not by JSON Schema regex. Known limitation recorded: `escritura_mono_001` passes the regex (confirmed by empirical test 2026-04-17).
+
+**Impact on the pipeline:**
+
+- `scripts/validar_corpus_catalog.ts` must include a cross-check: if `tipo_documento == ESCRITURA_COMPRA_VENDA`, qualidade code must not be `mono`, `onus`, `rural`, `transporte`; if `tipo_documento == MATRICULA`, qualidade code must not be `multi`, `pj`, `rogo`, `marca`, `prenot`. This cross-check is validator logic, not schema logic.
+- No impact on gate conditions; the regex is sufficient for schema validation purposes.
+
+**Approved by:** Líder técnico — retroativo, 2026-04-17 (review of Bloco 5A).
+
+**Evidence artifacts:**
+
+- `scripts/schemas/corpus-catalog.schema.json` (field `documento_id`, line 69)
+- Empirical regex test output, 2026-04-17: all 4 valid inputs PASS; `escritura_boa_01`, `matricula_invalida_001`, `Escritura_boa_001`, `contrato_boa_001`, `escritura_boa_001_extra` all FAIL; `escritura_mono_001` PASS (documented edge case, Option A limitation)
+
+---
+
+### Technical decision [2026-04-17] — DECISION-5A-2: categoria_corpus — 15-value enum derived from Section 3.1
+
+**Context:** The plan's schema contract file (`.claude/schemas/corpus-catalog.md`) specifies that `categoria_corpus` must use the category codes from the plan. Section 3.1 of `fase0_plano_execucao.md` enumerates 15 corpus categories (7 for matrículas, 8 for escrituras). The schema contract does not list the exact string values of those codes; they had to be derived from Section 3.1.
+
+**Alternatives considered:**
+
+1. Enum with all 15 values derived from Section 3.1 — deterministic, enforces vocabulary at schema level; values are: `MAT-ATUAL-BOA`, `MAT-ATUAL-DEG`, `MAT-MONO`, `MAT-ONUS`, `MAT-RURAL`, `MAT-TRANSP`, `ESC-NATIVA`, `ESC-BOA`, `ESC-DEG`, `ESC-BAIXA`, `ESC-MULTI`, `ESC-PJ`, `ESC-ROGO`, `ESC-MARCA`, `ESC-PRENOT`.
+2. Open string — no vocabulary enforcement; any string passes; defers validation to scripts; risk of typos in catalog.
+3. 14-value enum — one category was missed on first read; this was the error in the previous attempt, now corrected.
+
+**Decision taken:** 15-value enum as above.
+
+**Justification:** Section 3.1 lists exactly 15 categories. The enum provides machine-readable enforcement of the planned corpus composition. The codes are derived directly from the abbreviated category names in Section 3.1 (e.g., "Matrículas com ônus averbados" → `MAT-ONUS`). All 15 values are present in the current schema.
+
+**Impact on the pipeline:**
+
+- Any corpus catalog entry with a `categoria_corpus` value outside these 15 will fail schema validation. This is the intended behavior.
+- If the plan is amended to add a category (technical lead authority), the enum must be updated in the schema.
+
+**Approved by:** Líder técnico — retroativo, 2026-04-17 (review of Bloco 5A).
+
+**Evidence artifacts:**
+
+- `scripts/schemas/corpus-catalog.schema.json` (field `categoria_corpus`, enum block)
+- `fase0_plano_execucao.md` Section 3.1 (15 categories enumerated)
+
+---
+
+### Technical decision [2026-04-17] — DECISION-5A-3: checklist_gabarito typed as open string (not enum)
+
+**Context:** The ground truth schema includes a `checklist_gabarito` field used to record whether specific document conditions are present (e.g., watermarks, ônus, rogo signature). The values are per-field booleans expressed as strings or structured markers. Enumerating all possible values at the schema level would require exhaustive knowledge of every field-specific vocabulary, which is not specified in the plan's schema contract.
+
+**Alternatives considered:**
+
+1. Open `string` type — any non-null string is valid; field-specific vocabulary enforced by annotators and validator scripts; simple and extensible.
+2. Enum with known values (e.g., `"SIM"`, `"NAO"`, `"N/A"`) — enforces a fixed vocabulary; risks rejecting field-specific values that differ per document type (e.g., a matricula checklist value that does not apply to escrituras).
+3. Boolean — cleaner for binary conditions, but loses the ability to represent `"N/A"` or field-specific qualitative states that annotators may need.
+
+**Decision taken:** Open `string` type. No enum constraint on `checklist_gabarito`.
+
+**Justification:** The plan does not specify a fixed string vocabulary for checklist values. Different fields have different valid states. Enforcing an enum would require information not present in plan v1.3 and risks rejecting valid annotations. Vocabulary discipline is enforced by annotation guidelines (human annotators), not JSON Schema.
+
+**Impact on the pipeline:**
+
+- Annotators must follow the annotation guidelines for consistent vocabulary.
+- Validator script (`scripts/validar_ground_truth.ts`) may add field-specific value checks if annotation guidelines are formalized.
+- No impact on gate conditions.
+
+**Approved by:** Líder técnico — retroativo, 2026-04-17 (review of Bloco 5A).
+
+**Evidence artifacts:**
+
+- `scripts/schemas/ground-truth.schema.json` (field `checklist_gabarito`)
+- `.claude/schemas/ground-truth.md` (schema contract — no vocabulary enumeration for checklist values)
+
+---
+
+### Technical decision [2026-04-17] — DECISION-5A-4: hash_arquivo without format regex (two hash protocols accepted)
+
+**Context:** The baseline and ground truth schemas include a `hash_arquivo` field intended to store a cryptographic hash of the document file. The plan (Section 11 / benchmark integrity rules) does not specify whether SHA-256 or another algorithm is used for all files. Two hash formats are legitimately in use: SHA-256 (64 hex characters) and potentially SHA-512 (128 hex characters) for larger files. Applying a strict regex for one algorithm would reject valid hashes of the other.
+
+**Alternatives considered:**
+
+1. No regex — `type: "string"` with `minLength: 1` only — accepts any string; no hash format enforcement; annotators could store non-hash values by mistake.
+2. SHA-256-only regex `^[a-f0-9]{64}$` — enforces exactly one protocol; rejects SHA-512; risks breaking if the team uses SHA-512 for any artifact.
+3. General hex regex `^[a-f0-9]{64}$|^[a-f0-9]{128}$` — accepts SHA-256 or SHA-512; more permissive but still enforces hex format and minimum hash length.
+4. Pattern `^[a-f0-9]{64,128}$` — allows any hex string of length 64–128; over-permissive (accepts intermediate lengths that are not valid hash outputs).
+
+**Decision taken:** No format regex on `hash_arquivo`; constraint is `type: "string"`, `minLength: 64`. Rationale: plan does not enumerate hash algorithm; enforcing one algorithm now risks blocking legitimate SHA-512 use. The `minLength: 64` ensures no empty or trivially short value is accepted.
+
+**Justification:** The benchmark integrity rule (`rules/benchmark-integrity.md`, Section 10) states that SHA-256 is used for the baseline, but does not preclude SHA-512 for other artifacts. Adding a strict regex for one algorithm would introduce a constraint not in the plan. The `minLength: 64` guard is sufficient for Phase 0 purposes. If the plan is amended to mandate SHA-256 exclusively, the regex `^[a-f0-9]{64}$` can be added at that time.
+
+**Impact on the pipeline:**
+
+- Scripts that compute hashes must use `sha256sum` or `crypto.createHash('sha256')` (Node.js) as the primary algorithm per `rules/benchmark-integrity.md`.
+- Schema validation will not enforce the algorithm; operational discipline enforces it.
+- No impact on gate conditions.
+
+**Approved by:** Líder técnico — retroativo, 2026-04-17 (review of Bloco 5A).
+
+**Evidence artifacts:**
+
+- `scripts/schemas/baseline-v1.schema.json` (field `hash_arquivo`)
+- `scripts/schemas/ground-truth.schema.json` (field `hash_arquivo`, if present)
+- `.claude/rules/benchmark-integrity.md` (Section 10 — SHA-256 for baseline)

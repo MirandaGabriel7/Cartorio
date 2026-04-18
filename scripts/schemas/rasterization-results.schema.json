@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "JSON Schema for benchmarks/rasterizacao/resultados_rasterizacao.json. Contract: .claude/schemas/rasterization-results.md. No dynamic-key sub-objects at this level — all nested structures are statically named. Validation rules that require cross-array consistency (e.g. resultados count = amostra × 2 libs × 2 DPIs, inspecao_visual >= 10) are enforced by the validator script, not JSON Schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "data",
+    "ambiente_execucao",
+    "amostra_selecionada",
+    "dpis",
+    "resultados",
+    "inspecao_visual",
+    "agregados"
+  ],
+  "properties": {
+    "data": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ambiente_execucao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "node_version", "mupdf_version", "poppler_pdftoppm_version"],
+      "properties": {
+        "os":                       { "type": "string", "minLength": 1 },
+        "node_version":             { "type": "string", "minLength": 1 },
+        "mupdf_version":            { "type": "string", "minLength": 1 },
+        "poppler_pdftoppm_version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "amostra_selecionada": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "dpis": {
+      "$comment": "Always exactly [300, 400] per Section 4 of the plan.",
+      "type": "array",
+      "const": [300, 400]
+    },
+    "resultados": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/RasterResult" }
+    },
+    "inspecao_visual": {
+      "$comment": "At least 10 entries required per schema contract; enforced by validator script.",
+      "type": "array",
+      "items": { "$ref": "#/definitions/VisualInspection" }
+    },
+    "agregados": {
+      "$ref": "#/definitions/Aggregates"
+    }
+  },
+  "definitions": {
+    "RasterResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documento_id", "pagina", "biblioteca", "dpi",
+        "tempo_ms", "tamanho_bytes", "largura_px", "altura_px", "erro"
+      ],
+      "properties": {
+        "documento_id":   { "type": "string", "minLength": 1 },
+        "pagina":         { "type": "integer", "minimum": 0 },
+        "biblioteca":     { "type": "string", "enum": ["mupdf", "poppler"] },
+        "dpi":            { "type": "integer", "enum": [300, 400] },
+        "tempo_ms":       { "type": "number",  "minimum": 0 },
+        "tamanho_bytes":  { "type": "integer", "minimum": 0 },
+        "largura_px":     { "type": "integer", "minimum": 0 },
+        "altura_px":      { "type": "integer", "minimum": 0 },
+        "erro":           { "type": ["string", "null"] }
+      }
+    },
+    "VisualInspection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documento_id", "dpi_inspecionado",
+        "mupdf_texto_nitido",    "poppler_texto_nitido",
+        "mupdf_bordas_definidas","poppler_bordas_definidas",
+        "mupdf_artefatos",       "poppler_artefatos",
+        "inspetor", "observacoes"
+      ],
+      "properties": {
+        "documento_id":             { "type": "string",  "minLength": 1 },
+        "dpi_inspecionado":         { "type": "integer", "enum": [300, 400] },
+        "mupdf_texto_nitido":       { "type": "boolean" },
+        "poppler_texto_nitido":     { "type": "boolean" },
+        "mupdf_bordas_definidas":   { "type": "boolean" },
+        "poppler_bordas_definidas": { "type": "boolean" },
+        "mupdf_artefatos":          { "type": "boolean" },
+        "poppler_artefatos":        { "type": "boolean" },
+        "inspetor":                 { "type": "string",  "minLength": 1 },
+        "observacoes":              { "type": "string" }
+      }
+    },
+    "LibraryAggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tempo_medio_ms_300dpi",
+        "tempo_medio_ms_400dpi",
+        "tamanho_medio_kb_300dpi",
+        "tamanho_medio_kb_400dpi",
+        "erros_total",
+        "taxa_erro",
+        "resolucao_conforme_100pct",
+        "texto_tao_ou_mais_nitido_que_alternativa_em_N_de_20"
+      ],
+      "properties": {
+        "tempo_medio_ms_300dpi":   { "type": "number",  "minimum": 0 },
+        "tempo_medio_ms_400dpi":   { "type": "number",  "minimum": 0 },
+        "tamanho_medio_kb_300dpi": { "type": "number",  "minimum": 0 },
+        "tamanho_medio_kb_400dpi": { "type": "number",  "minimum": 0 },
+        "erros_total":             { "type": "integer", "minimum": 0 },
+        "taxa_erro":               { "type": "number",  "minimum": 0, "maximum": 1 },
+        "resolucao_conforme_100pct": { "type": "boolean" },
+        "texto_tao_ou_mais_nitido_que_alternativa_em_N_de_20": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20
+        }
+      }
+    },
+    "Aggregates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mupdf", "poppler", "gate_1_rasterizacao_sub_criterios"],
+      "properties": {
+        "mupdf":    { "$ref": "#/definitions/LibraryAggregate" },
+        "poppler":  { "$ref": "#/definitions/LibraryAggregate" },
+        "gate_1_rasterizacao_sub_criterios": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "biblioteca_primaria_sugerida",
+            "condicao_1_taxa_erro_zero",
+            "condicao_2_tempo_aceitavel",
+            "condicao_3_visual_nitidez",
+            "condicao_4_resolucao_conforme"
+          ],
+          "properties": {
+            "biblioteca_primaria_sugerida":   { "type": "string", "enum": ["mupdf", "poppler"] },
+            "condicao_1_taxa_erro_zero":      { "type": "boolean" },
+            "condicao_2_tempo_aceitavel":     { "type": "boolean" },
+            "condicao_3_visual_nitidez":      { "type": "boolean" },
+            "condicao_4_resolucao_conforme":  { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

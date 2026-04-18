@@ -1,0 +1,217 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "JSON Schema for benchmarks/ocr/ocr_benchmark_relatorio.json. Contract: .claude/schemas/ocr-benchmark-report.md. No dynamic-key top-level sub-objects. Cross-consistency rules (calibration doc coverage, selecao.motor_escolhido matching decision file, weighted CER formula) are enforced by validator script. iteracoes_corretivas may be empty array when first run passes Gate 2.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "data",
+    "ambiente_execucao",
+    "corpus_calibracao_total",
+    "biblioteca_rasterizacao",
+    "dpi",
+    "perfil_preprocessamento",
+    "motores_avaliados",
+    "normalizacao_cer",
+    "resultados_por_motor",
+    "detalhamento_por_documento",
+    "selecao",
+    "gate_2_criterios",
+    "iteracoes_corretivas"
+  ],
+  "properties": {
+    "data": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ambiente_execucao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "node_version", "python_version", "tesseract_version", "paddleocr_version"],
+      "properties": {
+        "os":                 { "type": "string", "minLength": 1 },
+        "node_version":       { "type": "string", "minLength": 1 },
+        "python_version":     { "type": "string", "minLength": 1 },
+        "tesseract_version":  { "type": "string", "minLength": 1 },
+        "paddleocr_version":  { "type": "string", "minLength": 1 }
+      }
+    },
+    "corpus_calibracao_total": {
+      "$comment": "Must equal 30.",
+      "type": "integer",
+      "const": 30
+    },
+    "biblioteca_rasterizacao": {
+      "type": "string",
+      "enum": ["mupdf", "poppler"]
+    },
+    "dpi": {
+      "type": "integer",
+      "enum": [300, 400]
+    },
+    "perfil_preprocessamento": {
+      "type": "string",
+      "minLength": 1
+    },
+    "motores_avaliados": {
+      "$comment": "Must contain exactly the two engines; extra engines are rejected by additionalProperties constraints on resultados_por_motor.",
+      "type": "array",
+      "items": { "type": "string", "enum": ["tesseract", "paddleocr"] },
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true
+    },
+    "normalizacao_cer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["descricao", "biblioteca"],
+      "properties": {
+        "descricao":  { "type": "string", "minLength": 1 },
+        "biblioteca": { "type": "string", "minLength": 1 }
+      }
+    },
+    "resultados_por_motor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tesseract", "paddleocr"],
+      "properties": {
+        "tesseract":  { "$ref": "#/definitions/MotorResults" },
+        "paddleocr":  { "$ref": "#/definitions/MotorResults" }
+      }
+    },
+    "detalhamento_por_documento": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/DocumentDetail" }
+    },
+    "selecao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["motor_escolhido", "cer_ponderado", "regra_aplicada"],
+      "properties": {
+        "motor_escolhido": {
+          "type": "string",
+          "enum": ["tesseract", "paddleocr"]
+        },
+        "cer_ponderado": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tesseract", "paddleocr"],
+          "properties": {
+            "tesseract": { "type": "number", "minimum": 0, "maximum": 1 },
+            "paddleocr": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "regra_aplicada": { "type": "string", "minLength": 1 }
+      }
+    },
+    "gate_2_criterios": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alguem_atinge_todos_limiares",
+        "tesseract_atinge_todos",
+        "paddleocr_atinge_todos"
+      ],
+      "properties": {
+        "alguem_atinge_todos_limiares": { "type": "boolean" },
+        "tesseract_atinge_todos":        { "type": "boolean" },
+        "paddleocr_atinge_todos":        { "type": "boolean" }
+      }
+    },
+    "iteracoes_corretivas": {
+      "$comment": "Empty array when first run passes Gate 2. Up to 2 corrective iterations permitted before escalation.",
+      "type": "array",
+      "items": { "$ref": "#/definitions/CorrectiveIteration" }
+    }
+  },
+  "definitions": {
+    "MotorResults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cer_cpf_cnpj", "cer_matricula", "cer_nomes", "cer_texto_geral",
+        "tempo_medio_por_pagina_ms",
+        "gate_cpf_aprovado", "gate_matricula_aprovado",
+        "gate_nomes_aprovado", "gate_texto_geral_aprovado",
+        "todos_limiares_aprovados",
+        "documentos_processados", "paginas_processadas", "erros"
+      ],
+      "properties": {
+        "cer_cpf_cnpj":              { "type": "number", "minimum": 0, "maximum": 1 },
+        "cer_matricula":             { "type": "number", "minimum": 0, "maximum": 1 },
+        "cer_nomes":                 { "type": "number", "minimum": 0, "maximum": 1 },
+        "cer_texto_geral":           { "type": "number", "minimum": 0, "maximum": 1 },
+        "tempo_medio_por_pagina_ms": { "type": "number", "minimum": 0 },
+        "gate_cpf_aprovado":         { "type": "boolean" },
+        "gate_matricula_aprovado":   { "type": "boolean" },
+        "gate_nomes_aprovado":       { "type": "boolean" },
+        "gate_texto_geral_aprovado": { "type": "boolean" },
+        "todos_limiares_aprovados":  { "type": "boolean" },
+        "documentos_processados":    { "type": "integer", "minimum": 0 },
+        "paginas_processadas":       { "type": "integer", "minimum": 0 },
+        "erros": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["documento_id", "pagina", "motor", "erro"],
+            "properties": {
+              "documento_id": { "type": "string",  "minLength": 1 },
+              "pagina":       { "type": "integer", "minimum": 1 },
+              "motor":        { "type": "string",  "enum": ["tesseract", "paddleocr"] },
+              "erro":         { "type": "string",  "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "DocumentDetail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["documento_id", "total_paginas", "motores"],
+      "properties": {
+        "documento_id":  { "type": "string",  "minLength": 1 },
+        "total_paginas": { "type": "integer", "minimum": 1 },
+        "motores": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tesseract", "paddleocr"],
+          "properties": {
+            "tesseract": { "$ref": "#/definitions/DocumentMotorMetrics" },
+            "paddleocr": { "$ref": "#/definitions/DocumentMotorMetrics" }
+          }
+        }
+      }
+    },
+    "DocumentMotorMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cer_cpf_cnpj", "cer_matricula", "cer_nomes", "cer_texto_geral",
+        "tempo_total_ms", "confianca_media"
+      ],
+      "properties": {
+        "cer_cpf_cnpj":    { "type": "number", "minimum": 0, "maximum": 1 },
+        "cer_matricula":   { "type": "number", "minimum": 0, "maximum": 1 },
+        "cer_nomes":       { "type": "number", "minimum": 0, "maximum": 1 },
+        "cer_texto_geral": { "type": "number", "minimum": 0, "maximum": 1 },
+        "tempo_total_ms":  { "type": "number", "minimum": 0 },
+        "confianca_media": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "CorrectiveIteration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "iteracao", "data", "acao",
+        "resultado_sumario", "perfil_preprocessamento_usado"
+      ],
+      "properties": {
+        "iteracao":                      { "type": "integer", "minimum": 1 },
+        "data":                          { "type": "string",  "format": "date-time" },
+        "acao":                          { "type": "string",  "minLength": 1 },
+        "resultado_sumario":             { "type": "string",  "minLength": 1 },
+        "perfil_preprocessamento_usado": { "type": "string",  "minLength": 1 }
+      }
+    }
+  }
+}

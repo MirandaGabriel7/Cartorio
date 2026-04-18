@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "JSON Schema for corpus/ground_truth/<documento_id>_gt.json. Contract: .claude/schemas/ground-truth.md. Sub-objects with relaxed additionalProperties: (1) campos — keys are dynamic field names (transmitente_N_nome, onus_N_tipo, proprietario_N_cpf_cnpj, etc.) that vary by document type and number of parties; static enumeration would reject valid documents. (2) texto_completo_por_pagina — keys are string-encoded page numbers, count depends on total_paginas.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "documento_id",
+    "tipo",
+    "classificacao_qualidade",
+    "total_paginas",
+    "anotador_primario",
+    "anotador_secundario",
+    "data_anotacao_primaria",
+    "data_anotacao_secundaria",
+    "discordancias_resolvidas",
+    "resolucao_discordancias",
+    "campos",
+    "texto_completo_por_pagina",
+    "checklist_gabarito"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "ground_truth_schema"
+    },
+    "documento_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tipo": {
+      "type": "string",
+      "enum": ["ESCRITURA_COMPRA_VENDA", "MATRICULA"]
+    },
+    "classificacao_qualidade": {
+      "type": "string",
+      "enum": ["BOA", "DEGRADADA", "BAIXA", "NATIVA"]
+    },
+    "total_paginas": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "anotador_primario": {
+      "type": "string",
+      "minLength": 1
+    },
+    "anotador_secundario": {
+      "$comment": "Non-null for all 30 calibration corpus documents; may be null for documents 31–145 with 20% random re-annotation. minLength applies only when type is string.",
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "data_anotacao_primaria": {
+      "type": "string",
+      "format": "date"
+    },
+    "data_anotacao_secundaria": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "format": "date" }
+      ]
+    },
+    "discordancias_resolvidas": {
+      "type": "boolean"
+    },
+    "resolucao_discordancias": {
+      "$comment": "Must be non-null when discordancias_resolvidas is true; semantic constraint enforced by validator script.",
+      "type": ["string", "null"]
+    },
+    "campos": {
+      "$comment": "additionalProperties: true (open object) — field keys are dynamic: transmitente_N_nome, transmitente_N_cpf, adquirente_N_cpf, onus_N_tipo, proprietario_N_nome, etc. The N suffix and the field vocabulary are defined per document type in Section 17 of the plan, making a closed static set impractical and incorrect.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["valor", "pagina", "obrigatorio"],
+        "properties": {
+          "valor": {
+            "$comment": "Unconstrained — semantics depend on field: string for names/CPF/dates, integer (cents) for monetary values, boolean for flags, null when field is absent and obrigatorio is false."
+          },
+          "pagina": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "obrigatorio": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "texto_completo_por_pagina": {
+      "$comment": "additionalProperties: true — keys are string page numbers (e.g. '1', '2'); count and values are document-specific.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "checklist_gabarito": {
+      "$comment": "All 34 checklist items (item_01..item_34) are required per validation rule 7. Values are 'OK', 'NAO_ATENDE', 'NAO_APLICA' or field-specific strings.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "item_01", "item_02", "item_03", "item_04", "item_05",
+        "item_06", "item_07", "item_08", "item_09", "item_10",
+        "item_11", "item_12", "item_13", "item_14", "item_15",
+        "item_16", "item_17", "item_18", "item_19", "item_20",
+        "item_21", "item_22", "item_23", "item_24", "item_25",
+        "item_26", "item_27", "item_28", "item_29", "item_30",
+        "item_31", "item_32", "item_33", "item_34"
+      ],
+      "patternProperties": {
+        "^item_(0[1-9]|[12][0-9]|3[0-4])$": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
