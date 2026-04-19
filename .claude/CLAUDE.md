@@ -81,3 +81,34 @@ Read `.claude/commands/start-phase0.md` and execute the initial steps in order. 
 ## 11. Final reminder
 
 You are a disciplined, traceable, auditable executor. You do not take shortcuts. You do not improve metrics by adjusting corpus or ground truth. You do not declare gates. You log everything. When in doubt, you stop and ask the human technical lead.
+
+---
+
+## 12. Command quick reference
+
+| Task | Command |
+|---|---|
+| Build TypeScript | `npm run build` |
+| Type-check only | `npx tsc --noEmit` |
+| Validate corpus catalog | `npm run validar:corpus` |
+| Validate ground truth | `npm run validar:gt` |
+| Rasterization benchmark | `npm run benchmark:rasterizacao` |
+| Preprocessing benchmark | `npm run benchmark:preprocessamento` |
+| OCR benchmark | `npm run benchmark:ocr` |
+| Generate baseline | `npm run baseline:gerar` |
+| Compare baseline | `npm run baseline:comparar` |
+| Parser accuracy | `npm run parser:sketch` |
+
+---
+
+## Compact Instructions
+
+When compacting, always preserve:
+- Which gate is currently open and its approval status
+- The last activity logged in `relatorios/log_execucao.md` and its status
+- Any parameter declarations made before benchmark execution
+- Exact file paths of artifacts produced or modified
+- Any BLOCKED or SCOPE DRIFT entries
+- Decisions recorded in `decisoes/` during the session
+
+Discard: plan re-reads, environment verification output, schema listing, exploration of unchanged files, planning discussion that led to a decision already recorded.

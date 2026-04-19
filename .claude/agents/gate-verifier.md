@@ -1,3 +1,10 @@
+---
+name: gate-verifier
+description: Use this agent when a benchmark or parser-sketch activity is complete and gate conditions must be checked, when the user asks if a gate is ready, or when benchmark-runner or parser-sketch-engineer hands off results for gate assessment. Never invoke to approve a gate — only to verify and signal.
+model: claude-sonnet-4-6
+tools: Read, Write
+---
+
 # Agent — Gate Verifier
 
 ## Role

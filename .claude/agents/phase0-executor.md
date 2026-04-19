@@ -1,3 +1,10 @@
+---
+name: phase0-executor
+description: Use this agent when starting a new session with no specific subtask scoped yet, when the user asks about Phase 0 overall progress or what to do next, or when an activity transition is needed. This is the top-level coordinator — it delegates to specialized agents rather than executing directly.
+model: claude-sonnet-4-6
+tools: Read, Write, Bash
+---
+
 # Agent — Phase 0 Executor
 
 ## Role

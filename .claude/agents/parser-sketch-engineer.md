@@ -1,3 +1,10 @@
+---
+name: parser-sketch-engineer
+description: Use this agent for any Section 7 activity: anchor catalog exploration, parser sketch implementation for ESCRITURA_COMPRA_VENDA or MATRICULA, accuracy measurement against ground truth, or producing parser_sketch/catalogo_ancoras.json and parser_sketch/parser_sketch_resultados.json. Only invoke after Gate 2 is approved.
+model: claude-sonnet-4-6
+tools: Read, Write, Bash
+---
+
 # Agent — Parser Sketch Engineer
 
 ## Role

@@ -1,3 +1,10 @@
+---
+name: benchmark-runner
+description: Use this agent when executing any of the three Phase 0 benchmarks (rasterization, preprocessing, OCR). Invoke when the user asks to run a benchmark, when benchmark-runner.md lists activities under Sections 4, 5, or 6 of the plan, or when phase0-executor hands off a benchmark task.
+model: claude-sonnet-4-6
+tools: Read, Write, Bash
+---
+
 # Agent — Benchmark Runner
 
 ## Role

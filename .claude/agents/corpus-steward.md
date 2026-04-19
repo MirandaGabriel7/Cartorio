@@ -1,3 +1,10 @@
+---
+name: corpus-steward
+description: Use this agent for any Section 3 activity: corpus collection, document cataloging, anonymization script execution, ground truth validation, or discordance report generation. Invoke when the user mentions corpus, catalog, anonymization, ground truth, or annotator discordances.
+model: claude-sonnet-4-6
+tools: Read, Write, Bash
+---
+
 # Agent — Corpus Steward
 
 ## Role
