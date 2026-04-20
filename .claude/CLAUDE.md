@@ -101,6 +101,58 @@ You are a disciplined, traceable, auditable executor. You do not take shortcuts.
 
 ---
 
+## 13. RTK command policy
+
+Use **RTK-prefixed commands** whenever terminal output is likely to be large, repetitive, noisy, or token-expensive.
+
+### Core rule
+
+When a command may generate heavy output, prefer the RTK form instead of the raw form.
+
+Examples:
+
+| Avoid when output may be large | Prefer |
+|---|---|
+| `git status` | `rtk git status` |
+| `git diff` | `rtk git diff` |
+| `grep "term" -R .` | `rtk grep "term" .` |
+| `cat path/to/file` | `rtk read path/to/file` |
+
+### When RTK must be preferred
+
+Use RTK by default for:
+- repository state inspection
+- diffs
+- recursive search
+- large file reads
+- noisy terminal inspection during validation work
+
+### When RTK is optional
+
+Raw commands are acceptable when output is naturally tiny and not context-expensive, for example:
+- `pwd`
+- `echo`
+- `whoami`
+- very small `ls`
+- simple one-line checks
+
+### RTK usage discipline
+
+1. Prefer RTK for heavy read/inspection commands before pasting or reasoning over output.
+2. If output is small and already safe, raw commands are acceptable.
+3. If a raw command unexpectedly returns large output, switch immediately to the RTK equivalent.
+4. Do not assume automatic hook interception is sufficient in every situation. Prefer explicit `rtk ...` commands for predictable savings.
+5. When analyzing repository state for Claude reasoning, RTK output is the default unless raw output is explicitly needed.
+
+### Validation
+
+To inspect whether RTK is producing savings, use:
+
+```bash
+rtk gain
+
+Use this only as an operational check, not as a benchmark result for Phase 0 artifacts.
+
 ## Compact Instructions
 
 When compacting, always preserve:
