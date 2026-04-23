@@ -1,19 +1,31 @@
-# Corpus — PDFs originais e anonimizados nunca versionados
+# Corpus sensível — nunca versionar
 corpus/originais/
 corpus/anonimizados/
+corpus/ground_truth/
+corpus/*.json
 
-# Arquivos temporários
+# Temporários e saídas locais
 temp/
+saida/
+piloto/
+
+# Artefatos potencialmente sensíveis gerados dos documentos
+*.txt
+*.csv
+*.tsv
+*.log
+*.png
+*.jpg
+*.jpeg
+*.webp
 
 # Node.js
 node_modules/
 dist/
 
-# Imagens de amostras de benchmark
-**/amostras/*.png
-
 # Python virtual environment
 .venv/
+venv/
 
 # Python
 __pycache__/
@@ -22,11 +34,8 @@ __pycache__/
 *.pyd
 .Python
 *.egg-info/
-dist/
 build/
 .env
-.venv
-venv/
 
 # TypeScript
 *.js.map
